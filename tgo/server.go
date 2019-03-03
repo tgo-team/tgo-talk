@@ -2,6 +2,7 @@ package tgo
 
 type Server interface {
 	Start() error
-	MsgChan() chan Msg
+	ReadMsgChan() chan *Msg
+	WriteMsgChan() chan *Msg
 	Stop() error
 }

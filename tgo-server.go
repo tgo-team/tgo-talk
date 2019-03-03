@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/judwhite/go-svc/svc"
+	"github.com/tgo-team/tgo-chat/handlers"
 	_ "github.com/tgo-team/tgo-chat/log"
+	_ "github.com/tgo-team/tgo-chat/protocol"
 	_ "github.com/tgo-team/tgo-chat/server"
 	"github.com/tgo-team/tgo-chat/tgo"
 	"os"
@@ -34,6 +36,7 @@ func (p *program) Start() error {
 
 	t := tgo.New(tgo.NewOptions())
 	t.Start()
+	t.Use(handlers.Test)
 	p.t = t
 	return nil
 }

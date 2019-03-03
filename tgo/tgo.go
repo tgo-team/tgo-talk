@@ -6,6 +6,7 @@ type TGO struct {
 	Log
 	Server Server
 	opts   atomic.Value // options
+	*Route
 }
 
 func New(opts *Options) *TGO {
@@ -16,11 +17,13 @@ func New(opts *Options) *TGO {
 	}
 	tg.storeOpts(opts)
 
-	cxt := &Context{
+	ctx := &Context{
 		TGO: tg,
 	}
-	tg.Server = NewServer(cxt)
+	tg.Server = NewServer(ctx)
 
+	r := NewRoute(ctx)
+	tg.Route = r
 	return tg
 }
 

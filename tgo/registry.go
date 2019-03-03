@@ -19,7 +19,7 @@ var registryMap map[string]interface{}
 
 type newServerFunc func(*Context) Server
 type newRouteFunc func(*Context) Route
-type newProtocol func( *Context) Protocol
+type newProtocol func() Protocol
 type newLog func(logLevel LogLevel) Log
 
 var clientLock sync.RWMutex
@@ -40,10 +40,10 @@ func RegistryProtocol(name string,newFunc newProtocol)  {
 }
 
 
-// 登记路由
-func RegistryRoute(newFunc newRouteFunc)  {
-	registryMap[fmt.Sprintf("%s",newRoutePrefix)] = newFunc
-}
+//// 登记路由
+//func RegistryRoute(newFunc newRouteFunc)  {
+//	registryMap[fmt.Sprintf("%s",newRoutePrefix)] = newFunc
+//}
 
 func RegistryLog(newFunc newLog)  {
 	registryMap[fmt.Sprintf("%s",newLogPrefix)] = newFunc
@@ -59,20 +59,20 @@ func NewServer(context *Context) Server  {
 	return nil
 }
 
-func NewRoute(ctx *Context) Route  {
-	key := fmt.Sprintf("%s",newRoutePrefix)
-	funcObj := registryMap[key]
-	if funcObj!=nil {
-		return  funcObj.(newRouteFunc)(ctx)
-	}
-	return nil
-}
+//func NewRoute(ctx *Context) Route  {
+//	key := fmt.Sprintf("%s",newRoutePrefix)
+//	funcObj := registryMap[key]
+//	if funcObj!=nil {
+//		return  funcObj.(newRouteFunc)(ctx)
+//	}
+//	return nil
+//}
 
-func NewProtocol(ctx *Context) Protocol  {
-	key := fmt.Sprintf("%s",newProtocolPrefix)
+func NewProtocol(name string) Protocol  {
+	key := fmt.Sprintf("%s-%s",newProtocolPrefix,name)
 	funcObj := registryMap[key]
 	if funcObj!=nil {
-		return  funcObj.(newProtocol)(ctx)
+		return  funcObj.(newProtocol)()
 	}
 	return nil
 }

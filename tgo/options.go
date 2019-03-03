@@ -16,7 +16,7 @@ type Options struct {
 	MaxBytesPerFile      int64         // 每个文件数据文件最多保存多大的数据 单位byte
 	SyncEvery            int64         // 内存队列每满多少消息就同步一次
 	SyncTimeout          time.Duration // 超过超时时间没同步就持久化一次
-	Pro                  string        // 协议 比如 tgo,mqtt
+	Pro                  Protocol        // 协议
 	MemQueueSize         int64         // 内存队列的chan大小，值表示内存中能堆积多少条消息
 	MsgTimeout           time.Duration // 消息发送超时时间
 }
@@ -36,5 +36,6 @@ func NewOptions() *Options {
 		HTTPAddress:          "0.0.0.0:6667",
 		HTTPSAddress:         "0.0.0.0:6443",
 		MaxHeartbeatInterval: 60 * time.Second,
+		Pro:NewProtocol("tgo"),
 	}
 }
