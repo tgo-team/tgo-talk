@@ -42,7 +42,7 @@ func NewTCPServer(opts *tgo.Options) *TCPServer {
 		os.Exit(1)
 	}
 	s.waitGroup.Wrap(s.clientExitLoop)
-	s.waitGroup.Wrap(s.msgLoop)
+	//s.waitGroup.Wrap(s.msgLoop)
 	return s
 }
 
@@ -141,23 +141,23 @@ exit:
 	s.Info("clientExitLoop is exit!")
 }
 
-func (s *TCPServer) msgLoop() {
-	for {
-		select {
-		case msg := <-s.readMsgChan:
-			if msg!=nil {
-				s.Info("Get the message - %v", msg)
-			}else{
-				s.Warn("Get the message is nil")
-			}
-		case <-s.exitChan:
-			goto exit
-
-		}
-	}
-exit:
-	s.Info("msgLoop is exit!")
-}
+//func (s *TCPServer) msgLoop() {
+//	for {
+//		select {
+//		case msg := <-s.readMsgChan:
+//			if msg!=nil {
+//				s.Info("Get the message - %v", msg)
+//			}else{
+//				s.Warn("Get the message is nil")
+//			}
+//		case <-s.exitChan:
+//			goto exit
+//
+//		}
+//	}
+//exit:
+//	s.Info("msgLoop is exit!")
+//}
 
 
 func (s *TCPServer) RealTCPAddr() *net.TCPAddr {
