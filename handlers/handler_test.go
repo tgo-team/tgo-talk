@@ -58,6 +58,35 @@ func TestHandleHeartbeat(t *testing.T) {
 	test.Equal(t,tgo.MsgTypePong,tgo.MsgType(resultBytes[0]))
 }
 
+func TestHandleAuth(t *testing.T) {
+	opts := tgo.NewOptions()
+	opts.Log = test.NewLog(t)
+	tg := tgo.New(opts)
+	tg.Use(HandleAuth)
+	tg.Use(HandleHeartbeat)
+	err := tg.Start()
+	test.Nil(t, err)
+
+	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
+	test.Nil(t, err)
+	msgBytes := []byte{byte(tgo.MsgTypeAuth),13,0x00,0x00,0x00,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0,0}
+	msgBytes = append(msgBytes,[]byte("pwd")...)
+	_, err = cn.Write(msgBytes)
+	test.Nil(t, err)
+	time.Sleep(time.Millisecond * 50)
+
+
+	msg,err := tg.GetOpts().Pro.Decode(cn)
+	test.Nil(t,err)
+
+	test.Equal(t,tgo.MsgTypeAuthACK,msg.MsgType)
+	test.Equal(t,tgo.MsgStatusAuthOk,int8(msg.VariableHeader[0]))
+}
+
+func authData(uid int64,token string) []byte {
+
+}
+
 func MustConnectServer(tcpAddr *net.TCPAddr) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", tcpAddr.String(), time.Second)
 	if err != nil {

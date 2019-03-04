@@ -2,25 +2,38 @@ package handlers
 
 import (
 	"github.com/tgo-team/tgo-chat/tgo"
-	"time"
 )
 
 func HandleAuth(m *tgo.MContext)  {
-
-	if m.Msg.From == 1 && string(m.Msg.Payload) == "pwd" {
-
+	if string(m.Msg.Payload) == "pwd" {
+		statefulServer,ok := m.Server.(tgo.StatefulServer)
+		if ok {
+			statefulServer.AuthClient(m.Msg.ClientId,m.Msg.From)
+			m.Msg.ClientId = m.Msg.From
+		}
+		err := m.ReplyMsg(tgo.NewAuthAck(tgo.MsgStatusAuthOk))
+		if err!=nil {
+			m.Error("ReplyMsg is error - %v",err)
+			return
+		}
+	}else{
+		err := m.ReplyMsg(tgo.NewAuthAck(0))
+		if err!=nil {
+			m.Error("ReplyMsg is error - %v",err)
+			return
+		}
+		m.Abort()
 	}
+
 }
 
 // HandleHeartbeat
 func HandleHeartbeat(m *tgo.MContext)  {
-	if m.Msg.MsgType == tgo.MsgTypeAuth { // Auth message is not processed
-		return
-	}
+	println("---HandleHeartbeat")
 	var err error
 	statefulServer,ok := m.Server.(tgo.StatefulServer)
 	if ok {
-		err = statefulServer.SetDeadline(m.Msg.ClientId,time.Now().Add(m.Ctx.TGO.GetOpts().MaxHeartbeatInterval*2))
+		err = statefulServer.Keepalive(m.Msg.ClientId)
 		if err!=nil {
 			m.Error("client[%d] keepalive is error - %v",m.Msg.ClientId,err)
 			return

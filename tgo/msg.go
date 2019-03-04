@@ -18,6 +18,11 @@ const (
 	MsgTypePong
 )
 
+const (
+	MsgStatusAuthFail int8 = iota
+	MsgStatusAuthOk
+)
+
 type Msg struct {
 	MsgData
 	ClientId int64
@@ -41,15 +46,20 @@ type MsgData struct {
 
 }
 
-func NewHeartbeatMsg(to int64,from int64)  {
-
-}
 
 func NewPong() *Msg  {
-
 	return  &Msg{
 		MsgData: MsgData{
 			MsgType:MsgTypePong,
+		},
+	}
+}
+
+func NewAuthAck(status int8) *Msg {
+	return  &Msg{
+		MsgData: MsgData{
+			MsgType:MsgTypeAuthACK,
+			VariableHeader: []byte{byte(status)},
 		},
 	}
 }

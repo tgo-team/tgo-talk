@@ -85,6 +85,10 @@ func (s *TCPServer) SetDeadline(clientId int64, t time.Time) error {
 	return nil
 }
 
+func (s *TCPServer) Keepalive(clientId int64) error  {
+	return s.SetDeadline(clientId,time.Now().Add(s.GetOpts().MaxHeartbeatInterval*2))
+}
+
 func (s *TCPServer) GetClient(clientId int64) tgo.Client {
 	cli := s.cm.getClient(clientId)
 	if cli != nil {
@@ -93,9 +97,23 @@ func (s *TCPServer) GetClient(clientId int64) tgo.Client {
 	return nil
 }
 
-func (s *TCPServer) SetClientAuthInfo(clientId int64, authId int64, token string) error {
 
-	return nil
+func (s *TCPServer) AuthClient(clientId,newClientId int64) {
+	cli := s.cm.getClient(clientId)
+	if cli!=nil {
+		s.cm.removeClient(clientId)
+		cli.id = newClientId
+		cli.isAuth = true
+		s.cm.addClient(newClientId,cli)
+	}
+}
+
+func (s *TCPServer) ClientIsAuth(clientId int64) bool {
+	cli := s.cm.getClient(clientId)
+	if cli!=nil {
+		return cli.isAuth
+	}
+	return false
 }
 
 func (s *TCPServer) Stop() error {
@@ -154,7 +172,8 @@ func (s *TCPServer) generateClient(conn net.Conn) {
 		s.Error("Client starts failing - %v", err)
 		return
 	}
-	s.cm.addClient(client)
+	clientId := atomic.AddInt64(&s.cm.clientIDSequence, -1)
+	s.cm.addClient(clientId,client)
 
 }
 

@@ -11,6 +11,8 @@ type Server interface {
 
 type StatefulServer interface {
 	SetDeadline(clientId int64,t time.Time) error
+	Keepalive(clientId int64) error
 	GetClient(clientId int64) Client
-	SetClientAuthInfo(clientId int64,authId int64,token string) error
+	AuthClient(clientId,newClientId int64)
+	ClientIsAuth(clientId int64) bool
 }

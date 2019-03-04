@@ -40,6 +40,7 @@ func (p *program) Start() error {
 	if err!=nil {
 		panic(err)
 	}
+	t.Use(handlers.HandleAuth)
 	t.Use(handlers.HandleHeartbeat)
 	p.t = t
 	return nil

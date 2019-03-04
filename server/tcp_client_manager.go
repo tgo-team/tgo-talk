@@ -2,7 +2,6 @@ package server
 
 import (
 	"sync"
-	"sync/atomic"
 )
 
 // -------------- clientManager -----------------------
@@ -20,8 +19,7 @@ func newClientManager() *clientManager {
 	}
 }
 
-func (cm *clientManager) addClient(client *Client) int64 {
-	clientId := atomic.AddInt64(&cm.clientIDSequence, 1)
+func (cm *clientManager) addClient(clientId int64,client *Client) int64 {
 	client.id = clientId
 	cm.clientLock.Lock()
 	cm.clients[client.id] = client

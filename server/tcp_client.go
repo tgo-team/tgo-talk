@@ -11,7 +11,6 @@ import (
 
 type Client struct {
 	id             int64
-	authId         int64
 	conn           net.Conn
 	exitChan       chan int   // Only  notify self exits
 	clientExitChan chan tgo.Client // Client exit notify server
@@ -19,6 +18,7 @@ type Client struct {
 	sync.RWMutex
 	readMsgChan chan *tgo.Msg
 	opts        atomic.Value // options
+	isAuth bool
 }
 
 func NewClient(conn net.Conn, readMsgChan chan *tgo.Msg, clientExitChan chan tgo.Client, opts *tgo.Options) *Client {
@@ -50,7 +50,7 @@ func (c *Client) msgLoop() {
 		default:
 			msg, err := c.GetOpts().Pro.Decode(c.conn)
 			if err != nil {
-				c.Warn("Decoding message failed - %v", err)
+				c.Error("Decoding message failed - %v", err)
 				goto exit
 			}
 			msg.ClientId = c.id
