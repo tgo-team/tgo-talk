@@ -12,6 +12,7 @@ const (
 	newRoutePrefix = "newRoute:"
 	newProtocolPrefix = "newProtocol:"
 	newLogPrefix = "newLog:"
+	newStoragePrefix = "newStorage:"
 )
 
 var registryMap map[string]interface{}
@@ -21,6 +22,7 @@ type newServerFunc func(*Context) Server
 type newRouteFunc func(*Context) Route
 type newProtocol func() Protocol
 type newLog func(logLevel LogLevel) Log
+type newStorageFunc func(*Context) Storage
 
 var clientLock sync.RWMutex
 var tContextLock sync.RWMutex
@@ -39,16 +41,22 @@ func RegistryProtocol(name string,newFunc newProtocol)  {
 	registryMap[fmt.Sprintf("%s-%s",newProtocolPrefix,name)] = newFunc
 }
 
-
-//// 登记路由
-//func RegistryRoute(newFunc newRouteFunc)  {
-//	registryMap[fmt.Sprintf("%s",newRoutePrefix)] = newFunc
-//}
-
 func RegistryLog(newFunc newLog)  {
 	registryMap[fmt.Sprintf("%s",newLogPrefix)] = newFunc
 }
 
+func RegistryStorage(newFunc newStorageFunc)  {
+	registryMap[fmt.Sprintf("%s",newStoragePrefix)] = newFunc
+}
+
+func NewStorage(context *Context) Storage {
+	key := fmt.Sprintf("%s",newStoragePrefix)
+	serverFuncObj := registryMap[key]
+	if serverFuncObj!=nil {
+		return  serverFuncObj.(newStorageFunc)(context)
+	}
+	return nil
+}
 
 func NewServer(context *Context) Server  {
 	key := fmt.Sprintf("%s",newServerPrefix)
@@ -58,6 +66,8 @@ func NewServer(context *Context) Server  {
 	}
 	return nil
 }
+
+
 
 //func NewRoute(ctx *Context) Route  {
 //	key := fmt.Sprintf("%s",newRoutePrefix)

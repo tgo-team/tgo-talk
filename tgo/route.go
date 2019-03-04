@@ -1,6 +1,9 @@
 package tgo
 
 import (
+	"fmt"
+	"reflect"
+	"runtime"
 	"sync"
 )
 
@@ -36,11 +39,13 @@ func (r *Route) handle(context *MContext) {
 
 
 func (r *Route) Serve(context *MContext) {
+	context.Ctx = r.ctx
+	context.Server = r.ctx.TGO.Server
 	context.handlers = r.handlers
 	r.handle(context)
 
-	if context.msg!=nil{
-		matchFunc := r.matchHandlerMap[context.msg.Match]
+	if context.Msg!=nil{
+		matchFunc := r.matchHandlerMap[context.Msg.Match]
 		if matchFunc!=nil {
 			matchFunc(context)
 		}
@@ -59,11 +64,12 @@ func (r *Route) Match(match string,handler HandlerFunc)  {
 }
 
 type MContext struct {
-	msg * Msg
+	Msg * Msg
 	index    int
 	handlers HandlersChain
 	sync.RWMutex
-	ctx * Context
+	Ctx * Context
+	Server Server
 }
 
 var pool = sync.Pool{
@@ -75,12 +81,12 @@ var pool = sync.Pool{
 func GetMContext(msg *Msg) *MContext {
 	mContext := pool.Get().(*MContext)
 	mContext.Reset()
-	mContext.msg = msg
+	mContext.Msg = msg
 	return mContext
 }
 
 func allocateContext() *MContext {
-	return &MContext{index: -1, handlers: nil, msg: nil, RWMutex: sync.RWMutex{}}
+	return &MContext{index: -1, handlers: nil, Msg: nil, RWMutex: sync.RWMutex{}}
 }
 
 func (c *MContext) Next() {
@@ -109,7 +115,49 @@ func (c *MContext) Reset() {
 	c.Lock()
 	defer c.Unlock()
 	c.index = -1
-	c.msg = nil
+	c.Msg = nil
 	c.handlers = nil
+}
 
+func (c *MContext) ReplyMsg(msg *Msg) error  {
+	return c.Server.SendMsg(c.Msg.ClientId,msg)
+}
+
+func (c *MContext) Info(f string, args ...interface{}) {
+	funcName := c.currentHandleName()
+	c.Ctx.TGO.GetOpts().Log.Info(fmt.Sprintf("Route[%s]:", funcName)+f, args...)
+	return
+}
+
+func (c *MContext) Error(f string, args ...interface{}) {
+	funcName := c.currentHandleName()
+	c.Ctx.TGO.GetOpts().Log.Error(fmt.Sprintf("Route[%s]:", funcName)+f, args...)
+	return
+}
+
+func (c *MContext) Debug(f string, args ...interface{}) {
+	funcName := c.currentHandleName()
+	c.Ctx.TGO.GetOpts().Log.Debug(fmt.Sprintf("Route[%s]:", funcName)+f, args...)
+	return
+}
+
+func (c *MContext) Warn(f string, args ...interface{}) {
+	funcName := c.currentHandleName()
+	c.Ctx.TGO.GetOpts().Log.Warn(fmt.Sprintf("Route[%s]:", funcName)+f, args...)
+	return
+}
+
+func (c *MContext) Fatal(f string, args ...interface{}) {
+	funcName := c.currentHandleName()
+	c.Ctx.TGO.GetOpts().Log.Fatal(fmt.Sprintf("Route[%s]:", funcName)+f, args...)
+	return
+}
+
+func (c *MContext) currentHandleName() string {
+	funcName := ""
+	if c.Current() != nil {
+		funcName = runtime.FuncForPC(reflect.ValueOf(c.Current()).Pointer()).Name()
+	}
+
+	return funcName
 }

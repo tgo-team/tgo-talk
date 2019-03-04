@@ -10,16 +10,14 @@ import (
 
 func TestClient_StartAndStop(t *testing.T) {
 	serverConn,client,readMsgChan,exitChan := getClient(t)
-	err := client.Start()
-	test.Nil(t, err)
 	go func() {
 		msg := <-readMsgChan
 		test.Equal(t, 6, int(msg.MsgType))
-		err = client.Stop()
+		err := client.Exit()
 		test.Nil(t,err)
 	}()
 
-	_, err = serverConn.Write([]byte{0x06})
+	_, err := serverConn.Write([]byte{0x06})
 	test.Nil(t, err)
 
 	<-exitChan
@@ -27,17 +25,14 @@ func TestClient_StartAndStop(t *testing.T) {
 
 func TestClientManager_addClient(t *testing.T)  {
 	_,client,_,_ := getClient(t)
-	err := client.Start()
-	test.Nil(t,err)
 	cm := newClientManager()
 	cm.addClient(client)
 	test.Equal(t, 1,len(cm.clients))
 }
 
+
 func TestClientManager_removeClient(t *testing.T)  {
 	_,client,_,_ := getClient(t)
-	err := client.Start()
-	test.Nil(t,err)
 	cm := newClientManager()
 	clientId := cm.addClient(client)
 
@@ -46,14 +41,14 @@ func TestClientManager_removeClient(t *testing.T)  {
 	test.Equal(t,0, len(cm.clients))
 }
 
-func getClient(t *testing.T) (net.Conn,*client,chan *tgo.Msg,chan int64)  {
+func getClient(t testing.TB) (net.Conn,*Client,chan *tgo.Msg,chan tgo.Client)  {
 	serverConn, clientConn := net.Pipe()
 	readMsgChan := make(chan *tgo.Msg, 100)
-	exitChan := make(chan int64, 0)
+	exitChan := make(chan tgo.Client, 0)
 	opts := tgo.NewOptions()
 	opts.Log = test.NewLog(t)
 	opts.Pro = protocol.NewTGO()
-	client := newClient(clientConn, readMsgChan, exitChan, opts)
+	client := NewClient(clientConn, readMsgChan, exitChan, opts)
 
 	return serverConn,client,readMsgChan,exitChan
 }

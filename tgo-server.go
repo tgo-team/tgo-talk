@@ -6,6 +6,7 @@ import (
 	_ "github.com/tgo-team/tgo-chat/log"
 	_ "github.com/tgo-team/tgo-chat/protocol"
 	_ "github.com/tgo-team/tgo-chat/server"
+	_ "github.com/tgo-team/tgo-chat/storage/memory"
 	"github.com/tgo-team/tgo-chat/tgo"
 	"os"
 	"path/filepath"
@@ -35,15 +36,19 @@ func (p *program) Init(env svc.Environment) error {
 func (p *program) Start() error {
 
 	t := tgo.New(tgo.NewOptions())
-	t.Start()
-	t.Use(handlers.Test)
+	err := t.Start()
+	if err!=nil {
+		panic(err)
+	}
+	t.Use(handlers.HandleHeartbeat)
 	p.t = t
 	return nil
 }
 
 func (p *program) Stop() error {
 	if p.t != nil {
-		p.t.Stop()
+		return p.t.Stop()
+
 	}
 	return nil
 }

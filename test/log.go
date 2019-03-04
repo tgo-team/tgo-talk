@@ -7,11 +7,11 @@ import (
 
 
 type Log struct {
-	t *testing.T
+	t testing.TB
 }
 
 
-func NewLog(t *testing.T) *Log {
+func NewLog(t testing.TB) *Log {
 	//logrus.SetReportCaller(true)
 	//logrus.SetOutput(os.Stdout)
 	return &Log{

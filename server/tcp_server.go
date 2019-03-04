@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 func init() {
@@ -23,7 +24,7 @@ type TCPServer struct {
 	waitGroup      tgo.WaitGroupWrapper
 	opts           atomic.Value // options
 	cm             *clientManager
-	clientExitChan chan int64 // client exit
+	clientExitChan chan tgo.Client // client exit
 	readMsgChan    chan *tgo.Msg
 }
 
@@ -31,7 +32,7 @@ func NewTCPServer(opts *tgo.Options) *TCPServer {
 	s := &TCPServer{
 		exitChan:       make(chan int, 0),
 		cm:             newClientManager(),
-		clientExitChan: make(chan int64, 0),
+		clientExitChan: make(chan tgo.Client, 1024),
 		readMsgChan:    make(chan *tgo.Msg, 1024),
 	}
 	s.opts.Store(opts)
@@ -64,7 +65,35 @@ func (s *TCPServer) ReadMsgChan() chan *tgo.Msg {
 	return s.readMsgChan
 }
 
-func (s *TCPServer) WriteMsgChan() chan *tgo.Msg {
+func (s *TCPServer) SendMsg(to int64, msg *tgo.Msg) error {
+	cli := s.cm.getClient(to)
+	if cli != nil {
+		msgData, err := s.GetOpts().Pro.Encode(msg)
+		if err != nil {
+			return err
+		}
+		return cli.Write(msgData)
+	}
+	return nil
+}
+
+func (s *TCPServer) SetDeadline(clientId int64, t time.Time) error {
+	cli := s.cm.getClient(clientId)
+	if cli != nil {
+		return cli.setDeadline(t)
+	}
+	return nil
+}
+
+func (s *TCPServer) GetClient(clientId int64) tgo.Client {
+	cli := s.cm.getClient(clientId)
+	if cli != nil {
+		return cli
+	}
+	return nil
+}
+
+func (s *TCPServer) SetClientAuthInfo(clientId int64, authId int64, token string) error {
 
 	return nil
 }
@@ -115,9 +144,12 @@ exit:
 }
 
 func (s *TCPServer) generateClient(conn net.Conn) {
-
-	client := newClient(conn,s.readMsgChan,s.clientExitChan,s.GetOpts())
-	err := client.Start()
+	err := conn.SetDeadline(time.Now().Add(time.Second * 2)) // 2 seconds authentication time
+	if err != nil {
+		s.Error("SetDeadline is error - %v", err)
+		return
+	}
+	client := NewClient(conn, s.readMsgChan, s.clientExitChan, s.GetOpts())
 	if err != nil {
 		s.Error("Client starts failing - %v", err)
 		return
@@ -129,9 +161,9 @@ func (s *TCPServer) generateClient(conn net.Conn) {
 func (s *TCPServer) clientExitLoop() {
 	for {
 		select {
-		case clientId := <-s.clientExitChan:
-			s.Info("client[%d] is exit", clientId)
-			s.cm.removeClient(clientId)
+		case cli := <-s.clientExitChan:
+			s.Info("client[%v] is exit", cli)
+			//s.cm.removeClient(cli)
 		case <-s.exitChan:
 			goto exit
 
@@ -140,25 +172,6 @@ func (s *TCPServer) clientExitLoop() {
 exit:
 	s.Info("clientExitLoop is exit!")
 }
-
-//func (s *TCPServer) msgLoop() {
-//	for {
-//		select {
-//		case msg := <-s.readMsgChan:
-//			if msg!=nil {
-//				s.Info("Get the message - %v", msg)
-//			}else{
-//				s.Warn("Get the message is nil")
-//			}
-//		case <-s.exitChan:
-//			goto exit
-//
-//		}
-//	}
-//exit:
-//	s.Info("msgLoop is exit!")
-//}
-
 
 func (s *TCPServer) RealTCPAddr() *net.TCPAddr {
 	return s.tcpListener.Addr().(*net.TCPAddr)

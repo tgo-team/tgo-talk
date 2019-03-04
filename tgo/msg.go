@@ -20,6 +20,7 @@ const (
 
 type Msg struct {
 	MsgData
+	ClientId int64
 	index int // 在队列里的下标 内部参数
 	Match string // 匹配规则
 }
@@ -40,7 +41,22 @@ type MsgData struct {
 
 }
 
+func NewHeartbeatMsg(to int64,from int64)  {
+
+}
+
+func NewPong() *Msg  {
+
+	return  &Msg{
+		MsgData: MsgData{
+			MsgType:MsgTypePong,
+		},
+	}
+}
+
+
 func (m *Msg) String() string {
 
 	return fmt.Sprintf("Message ID:%v MsgType: %d Payload %+v", m.Id, m.MsgType, m.Payload)
 }
+

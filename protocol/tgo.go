@@ -95,6 +95,8 @@ func (t *TGO) Decode(reader io.Reader) (msg *tgo.Msg,err error)  {
 }
 
 func (t *TGO) Encode(msg *tgo.Msg) ([]byte,error)  {
-
+	if msg.MsgType == tgo.MsgTypePong { // 如果是ping到此结束
+		return []byte{byte(tgo.MsgTypePong)},nil
+	}
 	return nil,nil
 }
