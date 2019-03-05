@@ -70,7 +70,7 @@ func (t *TGO) GetOpts() *Options {
 func (t *TGO) msgLoop() {
 	for {
 		select {
-		case msg := <-t.Server.ReadMsgChan():
+		case msg := <-t.Server.ReceiveMsgChan():
 			if msg != nil {
 				err := t.Storage.SaveMsg(msg)
 				if err != nil {

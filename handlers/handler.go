@@ -24,12 +24,9 @@ func HandleAuth(m *tgo.MContext)  {
 		}
 		m.Abort()
 	}
-
 }
-
 // HandleHeartbeat
 func HandleHeartbeat(m *tgo.MContext)  {
-	println("---HandleHeartbeat")
 	var err error
 	statefulServer,ok := m.Server.(tgo.StatefulServer)
 	if ok {
@@ -39,7 +36,6 @@ func HandleHeartbeat(m *tgo.MContext)  {
 			return
 		}
 	}
-
 	if m.Msg.MsgType == tgo.MsgTypePing {
 		err = m.ReplyMsg(tgo.NewPong())
 		if err!=nil {
@@ -50,5 +46,6 @@ func HandleHeartbeat(m *tgo.MContext)  {
 }
 
 func HandleRevMsg(m *tgo.MContext)  {
-	
+
+	m.Server.SendMsg()
 }

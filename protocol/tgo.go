@@ -16,7 +16,7 @@ func init()  {
 
 /**
   消息协议:
-  | msg_tye（1 byte） | remain length（4 byte） | to (8 byte) | variable header length（2 byte） | variable header | payload
+  | msg_tye（1 byte） | remain length（4 byte） | variable header length（2 byte） | variable header | payload
 
  */
 type TGO struct {
@@ -57,13 +57,6 @@ func (t *TGO) Decode(reader io.Reader) (msg *tgo.Msg,err error)  {
 	}
 	bodyReader := bytes.NewBuffer(bodyBytes)
 
-	// to
-	var to int64
-	if err = binary.Read(bodyReader, t.Order, &to); err != nil {
-		return nil, err
-	}
-	msg.To = to
-
 	// variable header length
 	var variableHeaderLength int16
 	if err = binary.Read(bodyReader, t.Order, &variableHeaderLength); err != nil {
@@ -78,8 +71,8 @@ func (t *TGO) Decode(reader io.Reader) (msg *tgo.Msg,err error)  {
 		}
 		msg.VariableHeader = variableHeader
 	}
-	// payloadLength = remainLength -  toLength - variableHeaderLengthLength - variableHeaderLength
-	payloadLength :=  int64(remainLength)   - 8  - 2- int64(variableHeaderLength)
+	// payloadLength = remainLength  - variableHeaderLengthLength - variableHeaderLength
+	payloadLength :=  int64(remainLength) - 2- int64(variableHeaderLength)
 	payload := make([]byte,payloadLength)
 	if _,err = io.ReadFull(bodyReader, payload); err != nil {
 		return nil, err
@@ -101,10 +94,6 @@ func (t *TGO) Encode(msg *tgo.Msg) ([]byte,error)  {
 	}
 
 	bodyBuff := bytes.NewBuffer(make([]byte,0))
-	// to
-	if err := binary.Write(bodyBuff, t.Order, int64(msg.To)); err != nil {
-		return nil, err
-	}
 	// variable header length
 	if err := binary.Write(bodyBuff, t.Order, int16(len(msg.VariableHeader))); err != nil {
 		return nil, err

@@ -69,7 +69,7 @@ func TestHandleAuth(t *testing.T) {
 
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
-	msgBytes := []byte{byte(tgo.MsgTypeAuth),13,0x00,0x00,0x00,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0x03,0,0}
+	msgBytes := []byte{byte(tgo.MsgTypeAuth),5,0x00,0x00,0x00,0,0}
 	msgBytes = append(msgBytes,[]byte("pwd")...)
 	_, err = cn.Write(msgBytes)
 	test.Nil(t, err)
@@ -83,9 +83,6 @@ func TestHandleAuth(t *testing.T) {
 	test.Equal(t,tgo.MsgStatusAuthOk,int8(msg.VariableHeader[0]))
 }
 
-func authData(uid int64,token string) []byte {
-
-}
 
 func MustConnectServer(tcpAddr *net.TCPAddr) (net.Conn, error) {
 	conn, err := net.DialTimeout("tcp", tcpAddr.String(), time.Second)

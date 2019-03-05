@@ -4,7 +4,7 @@ import "time"
 
 type Server interface {
 	Start() error
-	ReadMsgChan() chan *Msg
+	ReceiveMsgChan() chan *Msg
 	SendMsg(to int64,msg *Msg) error
 	Stop() error
 }

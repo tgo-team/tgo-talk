@@ -25,7 +25,7 @@ type TCPServer struct {
 	opts           atomic.Value // options
 	cm             *clientManager
 	clientExitChan chan tgo.Client // client exit
-	readMsgChan    chan *tgo.Msg
+	receiveMsgChan    chan *tgo.Msg
 }
 
 func NewTCPServer(opts *tgo.Options) *TCPServer {
@@ -33,7 +33,7 @@ func NewTCPServer(opts *tgo.Options) *TCPServer {
 		exitChan:       make(chan int, 0),
 		cm:             newClientManager(),
 		clientExitChan: make(chan tgo.Client, 1024),
-		readMsgChan:    make(chan *tgo.Msg, 1024),
+		receiveMsgChan:    make(chan *tgo.Msg, 1024),
 	}
 	s.opts.Store(opts)
 	var err error
@@ -60,9 +60,9 @@ func (s *TCPServer) Start() error {
 	return nil
 }
 
-func (s *TCPServer) ReadMsgChan() chan *tgo.Msg {
+func (s *TCPServer) ReceiveMsgChan() chan *tgo.Msg {
 
-	return s.readMsgChan
+	return s.receiveMsgChan
 }
 
 func (s *TCPServer) SendMsg(to int64, msg *tgo.Msg) error {
@@ -123,7 +123,7 @@ func (s *TCPServer) Stop() error {
 			return err
 		}
 	}
-	close(s.readMsgChan)
+	close(s.receiveMsgChan)
 	close(s.clientExitChan)
 	close(s.exitChan)
 	s.waitGroup.Wait()
@@ -167,7 +167,7 @@ func (s *TCPServer) generateClient(conn net.Conn) {
 		s.Error("SetDeadline is error - %v", err)
 		return
 	}
-	client := NewClient(conn, s.readMsgChan, s.clientExitChan, s.GetOpts())
+	client := NewClient(conn, s.receiveMsgChan, s.clientExitChan, s.GetOpts())
 	if err != nil {
 		s.Error("Client starts failing - %v", err)
 		return
