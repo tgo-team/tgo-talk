@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/tgo-team/tgo-chat/tgo"
 )
 
@@ -8,9 +9,14 @@ func HandleAuth(m *tgo.MContext)  {
 	if string(m.Msg.Payload) == "pwd" {
 		statefulServer,ok := m.Server.(tgo.StatefulServer)
 		if ok {
-			statefulServer.AuthClient(m.Msg.ClientId,m.Msg.From)
-			m.Msg.ClientId = m.Msg.From
+			// 如果是StatefulServer client需要设置为认证 并且更新clientId
+			statefulServer.AuthClient(m.Msg.ClientId,m.Msg.UID)
+			m.Msg.ClientId = m.Msg.UID
 		}
+		// 获取认证用户的设备ID 并加入到自己的channel里
+		channel := m.GetChannel(fmt.Sprintf("%d",m.Msg.UID))
+		channel.AddConsumer(m.Msg.UID)
+
 		err := m.ReplyMsg(tgo.NewAuthAck(tgo.MsgStatusAuthOk))
 		if err!=nil {
 			m.Error("ReplyMsg is error - %v",err)
@@ -30,6 +36,7 @@ func HandleHeartbeat(m *tgo.MContext)  {
 	var err error
 	statefulServer,ok := m.Server.(tgo.StatefulServer)
 	if ok {
+		// 如果是StatefulServer 由消息往来就保活
 		err = statefulServer.Keepalive(m.Msg.ClientId)
 		if err!=nil {
 			m.Error("client[%d] keepalive is error - %v",m.Msg.ClientId,err)
@@ -47,5 +54,5 @@ func HandleHeartbeat(m *tgo.MContext)  {
 
 func HandleRevMsg(m *tgo.MContext)  {
 
-	m.Server.SendMsg()
+	//m.Server.SendMsg()
 }

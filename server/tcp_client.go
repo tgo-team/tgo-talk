@@ -16,15 +16,15 @@ type Client struct {
 	clientExitChan chan tgo.Client // Client exit notify server
 	waitGroup      tgo.WaitGroupWrapper
 	sync.RWMutex
-	readMsgChan chan *tgo.Msg
+	receiveMsgChan chan *tgo.Msg
 	opts        atomic.Value // options
 	isAuth bool
 }
 
-func NewClient(conn net.Conn, readMsgChan chan *tgo.Msg, clientExitChan chan tgo.Client, opts *tgo.Options) *Client {
+func NewClient(conn net.Conn, receiveMsgChan chan *tgo.Msg, clientExitChan chan tgo.Client, opts *tgo.Options) *Client {
 	c := &Client{
 		conn:           conn,
-		readMsgChan:    readMsgChan,
+		receiveMsgChan:    receiveMsgChan,
 		clientExitChan: clientExitChan,
 		exitChan:       make(chan int, 0),
 	}
@@ -54,8 +54,9 @@ func (c *Client) msgLoop() {
 				goto exit
 			}
 			msg.ClientId = c.id
+			msg.UID = c.id
 			c.GetOpts().Monitor.TraceMsg("received",msg.Id)
-			c.readMsgChan <- msg
+			c.receiveMsgChan <- msg
 		}
 	}
 

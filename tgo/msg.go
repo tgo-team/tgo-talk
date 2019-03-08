@@ -37,8 +37,8 @@ type MsgData struct {
 	Payload   []byte    // Payload 消息内容
 	Timestamp int64     //// 消息创建时间戳
 	Attempts  uint16    // 尝试次数
-	From  int64     // 投递源ID
-	To    int64     // 投递目标ID
+	UID  int64     // 投递源ID
+	ToUID   int64     // 投递目标ID
 	// for in-flight handling
 	DeliveryTS time.Time     // 投递超时时间（超过这个时间后就不投递了）
 	Priority   int64         // 优先级 数字越小越优先

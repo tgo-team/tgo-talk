@@ -80,7 +80,7 @@ var pool = sync.Pool{
 
 func GetMContext(msg *Msg) *MContext {
 	mContext := pool.Get().(*MContext)
-	mContext.Reset()
+	mContext.reset()
 	mContext.Msg = msg
 	return mContext
 }
@@ -96,13 +96,6 @@ func (c *MContext) Next() {
 	}
 }
 
-func (c *MContext) Current() HandlerFunc {
-	if c.index < len(c.handlers) && c.index != -1 {
-		return c.handlers[c.index]
-	}
-	return nil
-}
-
 func (c *MContext) Abort() {
 	c.index = len(c.handlers)
 }
@@ -111,7 +104,16 @@ func (c *MContext) IsAborted() bool {
 	return c.index >= len(c.handlers)
 }
 
-func (c *MContext) Reset() {
+func (c *MContext) ReplyMsg(msg *Msg) error  {
+	return c.Server.SendMsg(c.Msg.ClientId,msg)
+}
+
+func (c *MContext) GetChannel(channelName string) Channel  {
+
+	return c.Ctx.TGO.GetChannel(channelName)
+}
+
+func (c *MContext) reset() {
 	c.Lock()
 	defer c.Unlock()
 	c.index = -1
@@ -119,10 +121,15 @@ func (c *MContext) Reset() {
 	c.handlers = nil
 }
 
-func (c *MContext) ReplyMsg(msg *Msg) error  {
-	return c.Server.SendMsg(c.Msg.ClientId,msg)
+func (c *MContext) current() HandlerFunc {
+	if c.index < len(c.handlers) && c.index != -1 {
+		return c.handlers[c.index]
+	}
+	return nil
 }
 
+
+// ---------- log --------------
 func (c *MContext) Info(f string, args ...interface{}) {
 	funcName := c.currentHandleName()
 	c.Ctx.TGO.GetOpts().Log.Info(fmt.Sprintf("Route[%s]:", funcName)+f, args...)
@@ -155,8 +162,8 @@ func (c *MContext) Fatal(f string, args ...interface{}) {
 
 func (c *MContext) currentHandleName() string {
 	funcName := ""
-	if c.Current() != nil {
-		funcName = runtime.FuncForPC(reflect.ValueOf(c.Current()).Pointer()).Name()
+	if c.current() != nil {
+		funcName = runtime.FuncForPC(reflect.ValueOf(c.current()).Pointer()).Name()
 	}
 
 	return funcName

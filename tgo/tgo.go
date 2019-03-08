@@ -6,15 +6,17 @@ type TGO struct {
 	Server Server
 	opts   atomic.Value // options
 	*Route
-	exitChan  chan int
-	waitGroup WaitGroupWrapper
-	Storage   Storage // storage msg
-	monitor   Monitor // Monitor
+	exitChan   chan int
+	waitGroup  WaitGroupWrapper
+	Storage    Storage // storage msg
+	monitor    Monitor // Monitor
+	channelMap map[string]Channel
 }
 
 func New(opts *Options) *TGO {
 	tg := &TGO{
-		exitChan: make(chan int, 0),
+		exitChan:   make(chan int, 0),
+		channelMap: map[string]Channel{},
 	}
 	if opts.Log == nil {
 		opts.Log = NewLog(opts.LogLevel)
@@ -108,5 +110,14 @@ exit:
 }
 
 func (t *TGO) TraceMsg(tag string, msgId int64) {
-	t.GetOpts().Log.Info("trace [%d] is %s",msgId,tag)
+	t.GetOpts().Log.Info("trace [%d] is %s", msgId, tag)
+}
+
+func (t *TGO) GetChannel(channelName string) Channel {
+	channel, ok := t.channelMap[channelName]
+	if !ok {
+		channel = NewGroupChannel(channelName,t.ctx)
+		t.channelMap[channelName] = channel
+	}
+	return channel
 }

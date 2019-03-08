@@ -26,6 +26,7 @@ type TCPServer struct {
 	cm             *clientManager
 	clientExitChan chan tgo.Client // client exit
 	receiveMsgChan    chan *tgo.Msg
+	storage tgo.Storage
 }
 
 func NewTCPServer(opts *tgo.Options) *TCPServer {

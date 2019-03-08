@@ -5,7 +5,7 @@ import "testing"
 func TestRoute_Use(t *testing.T) {
 	r := NewRoute(&Context{})
 	r.Use(func(context *MContext) {
-		if int(context.msg.MsgType) != 6 {
+		if int(context.Msg.MsgType) != 6 {
 			t.Error("消息类型错误！")
 		}
 	})
@@ -20,17 +20,17 @@ func TestRoute_Use(t *testing.T) {
 func TestRoute_Match(t *testing.T) {
 	r := NewRoute(&Context{})
 	r.Use(func(context *MContext) {
-		if int(context.msg.MsgType) != 6 {
+		if int(context.Msg.MsgType) != 6 {
 			t.Error("消息类型错误！")
 		}
 	})
 	r.Use(func(context *MContext) {
-		if int(context.msg.MsgType) != 6 {
+		if int(context.Msg.MsgType) != 6 {
 			t.Error("消息类型错误！")
 		}
 	})
 	r.Match("test", func(context *MContext) {
-		if int(context.msg.MsgType) != 6 {
+		if int(context.Msg.MsgType) != 6 {
 			t.Error("消息类型错误！")
 		}
 	})

@@ -29,7 +29,7 @@ func (m *Storage) ReceiveMsgChan() chan *tgo.Msg {
 }
 
 func (m *Storage) SaveMsg(msg *tgo.Msg) error {
-	m.msgMap[fmt.Sprintf("%d-%d", msg.Id, msg.From)] = msg
+	m.msgMap[fmt.Sprintf("%d-%d", msg.Id, msg.UID)] = msg
 	m.receiveMsgChan <- msg
 	return nil
 }
