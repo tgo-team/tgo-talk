@@ -14,15 +14,11 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	opts := tgo.NewOptions()
-	opts.Log = test.NewLog(t)
-	tg := tgo.New(opts)
+	tg := startTGO(t)
 	hasValue := 0
 	tg.Use(func(context *tgo.MContext) {
 		hasValue = 1
 	})
-	err := tg.Start()
-	test.Nil(t, err)
 
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
@@ -36,12 +32,8 @@ func TestHandler(t *testing.T) {
 }
 
 func TestHandleHeartbeat(t *testing.T) {
-	opts := tgo.NewOptions()
-	opts.Log = test.NewLog(t)
-	tg := tgo.New(opts)
+	tg  := startTGO(t)
 	tg.Use(HandleHeartbeat)
-	err := tg.Start()
-	test.Nil(t, err)
 
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
@@ -59,13 +51,9 @@ func TestHandleHeartbeat(t *testing.T) {
 }
 
 func TestHandleAuth(t *testing.T) {
-	opts := tgo.NewOptions()
-	opts.Log = test.NewLog(t)
-	tg := tgo.New(opts)
+	tg  := startTGO(t)
 	tg.Use(HandleAuth)
 	tg.Use(HandleHeartbeat)
-	err := tg.Start()
-	test.Nil(t, err)
 
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
@@ -80,7 +68,36 @@ func TestHandleAuth(t *testing.T) {
 	test.Nil(t,err)
 
 	test.Equal(t,tgo.MsgTypeAuthACK,msg.MsgType)
-	test.Equal(t,tgo.MsgStatusAuthOk,int8(msg.VariableHeader[0]))
+	test.Equal(t,tgo.MsgStatusAuthOk,tgo.AuthStatus(msg.VariableHeader[0]))
+}
+
+func TestHandleRevMsg(t *testing.T) {
+	tg  := startTGO(t)
+	tg.Use(HandleAuth)
+	tg.Use(HandleHeartbeat)
+	tg.Match("send",HandleRevMsg)
+
+	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
+	test.Nil(t, err)
+	msgBytes := []byte{byte(tgo.MsgTypeAuth),5,0x00,0x00,0x00,0,0}
+	msgBytes = append(msgBytes,[]byte("pwd")...)
+	_, err = cn.Write(msgBytes)
+	test.Nil(t, err)
+	msgBytes = []byte{byte(tgo.MsgTypeSend),7,0x00,0x00,0x00,0,0}
+	msgBytes = append(msgBytes,[]byte("hello")...)
+	_, err = cn.Write(msgBytes)
+	test.Nil(t, err)
+	time.Sleep(time.Millisecond * 50)
+
+	msg,err := tg.GetOpts().Pro.Decode(cn)
+	test.Nil(t,err)
+	test.Equal(t,tgo.MsgTypeAuthACK,msg.MsgType)
+	test.Equal(t,tgo.MsgStatusAuthOk,tgo.AuthStatus(msg.VariableHeader[0]))
+
+	msg,err = tg.GetOpts().Pro.Decode(cn)
+	test.Nil(t,err)
+	test.Equal(t,tgo.MsgTypeSendACK,msg.MsgType)
+	test.Equal(t,tgo.MsgStatusSuccess,tgo.MsgStatus(msg.VariableHeader[0]))
 }
 
 
@@ -90,4 +107,14 @@ func MustConnectServer(tcpAddr *net.TCPAddr) (net.Conn, error) {
 		return nil, err
 	}
 	return conn, nil
+}
+
+func startTGO(t *testing.T) *tgo.TGO  {
+	opts := tgo.NewOptions()
+	opts.TCPAddress = "0.0.0.0:0"
+	opts.Log = test.NewLog(t)
+	tg := tgo.New(opts)
+	err :=tg.Start()
+	test.Nil(t,err)
+	return tg
 }

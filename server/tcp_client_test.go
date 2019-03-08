@@ -26,7 +26,7 @@ func TestClient_StartAndStop(t *testing.T) {
 func TestClientManager_addClient(t *testing.T)  {
 	_,client,_,_ := getClient(t)
 	cm := newClientManager()
-	cm.addClient(client)
+	cm.addClient(234,client)
 	test.Equal(t, 1,len(cm.clients))
 }
 
@@ -34,7 +34,7 @@ func TestClientManager_addClient(t *testing.T)  {
 func TestClientManager_removeClient(t *testing.T)  {
 	_,client,_,_ := getClient(t)
 	cm := newClientManager()
-	clientId := cm.addClient(client)
+	clientId := cm.addClient(123,client)
 
 	cm.removeClient(clientId)
 

@@ -17,15 +17,24 @@ func NewConsumer(uid int64, deviceId int64) *Consumer {
 
 type Channel interface {
 	PutMsg(msg *Msg) error
-	AddConsumer(id int64,consumer *Consumer)
-	RemoveConsumer(id int64)
+	AddConsumer(id string,consumer *Consumer)
+	RemoveConsumer(id string)
 }
+
+type ChannelType int
+const (
+	ChannelTypePerson ChannelType = iota
+	ChannelTypeGroup
+)
+
+
+// ------------ person channel ----------------
 
 type PersonChannel struct {
 	ctx         *Context
 	channelName string
 	sync.RWMutex
-	consumers     map[int64]*Consumer
+	consumers     map[string]*Consumer
 	messageCount  uint64
 	memoryMsgChan chan *Msg
 }
@@ -34,7 +43,7 @@ func NewPersonChannel(channelName string, ctx *Context) *PersonChannel {
 	return &PersonChannel{
 		ctx:           ctx,
 		channelName:   channelName,
-		consumers:     map[int64]*Consumer{},
+		consumers:     map[string]*Consumer{},
 		memoryMsgChan: make(chan *Msg, ctx.TGO.GetOpts().MemQueueSize),
 	}
 }
@@ -49,13 +58,13 @@ func (p *PersonChannel) PutMsg(msg *Msg) error {
 	return nil
 }
 
-func (p *PersonChannel) AddConsumer(id int64,consumer *Consumer) {
+func (p *PersonChannel) AddConsumer(id string,consumer *Consumer) {
 	p.Lock()
 	defer p.Unlock()
 	p.consumers[id] = consumer
 }
 
-func (p *PersonChannel) RemoveConsumer(id int64) {
+func (p *PersonChannel) RemoveConsumer(id string) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -72,7 +81,7 @@ type GroupChannel struct {
 	ctx         *Context
 	channelName string
 	sync.RWMutex
-	consumers     map[int64]*Consumer
+	consumers     map[string]*Consumer
 	messageCount  uint64
 	memoryMsgChan chan *Msg
 }
@@ -82,7 +91,7 @@ func NewGroupChannel(channelName string, ctx *Context) *GroupChannel {
 	return &GroupChannel{
 		ctx:           ctx,
 		channelName:   channelName,
-		consumers:     map[int64]*Consumer{},
+		consumers:     map[string]*Consumer{},
 		memoryMsgChan: make(chan *Msg, ctx.TGO.GetOpts().MemQueueSize),
 	}
 }
@@ -97,13 +106,13 @@ func (g *GroupChannel) PutMsg(msg *Msg) error {
 	return nil
 }
 
-func (g *GroupChannel) AddConsumer(id int64,consumer *Consumer) {
+func (g *GroupChannel) AddConsumer(id string,consumer *Consumer) {
 	g.Lock()
 	defer g.Unlock()
 	g.consumers[id] = consumer
 }
 
-func (g *GroupChannel) RemoveConsumer(id int64) {
+func (g *GroupChannel) RemoveConsumer(id string) {
 	g.Lock()
 	defer g.Unlock()
 

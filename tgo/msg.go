@@ -18,9 +18,16 @@ const (
 	MsgTypePong
 )
 
+type AuthStatus int8
 const (
-	MsgStatusAuthFail int8 = iota
+	MsgStatusAuthFail AuthStatus = iota
 	MsgStatusAuthOk
+)
+
+type MsgStatus int8
+const (
+	MsgStatusFail MsgStatus = iota
+	MsgStatusSuccess
 )
 
 type Msg struct {
@@ -55,10 +62,19 @@ func NewPong() *Msg  {
 	}
 }
 
-func NewAuthAck(status int8) *Msg {
+func NewAuthACK(status AuthStatus) *Msg {
 	return  &Msg{
 		MsgData: MsgData{
 			MsgType:MsgTypeAuthACK,
+			VariableHeader: []byte{byte(status)},
+		},
+	}
+}
+
+func NewSendMsgACK(msgId int64,status MsgStatus) *Msg {
+	return  &Msg{
+		MsgData: MsgData{
+			MsgType:MsgTypeSendACK,
 			VariableHeader: []byte{byte(status)},
 		},
 	}

@@ -6,24 +6,41 @@ import (
 )
 
 func HandleAuth(m *tgo.MContext)  {
+	errorAuthACK := tgo.NewAuthACK(0)
+	statefulServer,ok := m.Server.(tgo.StatefulServer)
+	if ok {
+		if statefulServer.ClientIsAuth(m.Msg.ClientId) {
+			return
+		}else{
+			if m.Msg.MsgType != tgo.MsgTypeAuth {
+				err := m.ReplyMsg(errorAuthACK)
+				if err!=nil {
+					m.Error("ReplyMsg is error - %v",err)
+					return
+				}
+				m.Abort()
+				return
+			}
+		}
+	}
 	if string(m.Msg.Payload) == "pwd" {
-		statefulServer,ok := m.Server.(tgo.StatefulServer)
 		if ok {
 			// 如果是StatefulServer client需要设置为认证 并且更新clientId
 			statefulServer.AuthClient(m.Msg.ClientId,m.Msg.UID)
 			m.Msg.ClientId = m.Msg.UID
 		}
 		// 获取认证用户的设备ID 并加入到自己的channel里
-		channel := m.GetChannel(fmt.Sprintf("%d",m.Msg.UID))
-		channel.AddConsumer(m.Msg.UID)
+		channel := m.GetChannel(fmt.Sprintf("%d",m.Msg.UID),tgo.ChannelTypePerson)
+		var deviceId int64= 0
+		channel.AddConsumer(fmt.Sprintf("%d-%d",m.Msg.UID,deviceId),tgo.NewConsumer(m.Msg.UID,deviceId))
 
-		err := m.ReplyMsg(tgo.NewAuthAck(tgo.MsgStatusAuthOk))
+		err := m.ReplyMsg(tgo.NewAuthACK(tgo.MsgStatusAuthOk))
 		if err!=nil {
 			m.Error("ReplyMsg is error - %v",err)
 			return
 		}
 	}else{
-		err := m.ReplyMsg(tgo.NewAuthAck(0))
+		err := m.ReplyMsg(errorAuthACK)
 		if err!=nil {
 			m.Error("ReplyMsg is error - %v",err)
 			return
@@ -54,5 +71,13 @@ func HandleHeartbeat(m *tgo.MContext)  {
 
 func HandleRevMsg(m *tgo.MContext)  {
 
+
+	channel := m.GetChannel(fmt.Sprintf("%d",m.Msg.UID),tgo.ChannelTypePerson)
+	err := channel.PutMsg(m.Msg)
+	if err!=nil {
+		m.Error("PutMsg is error - %v",err)
+		return
+	}
+	m.ReplyMsg(tgo.NewSendMsgACK(2334,tgo.MsgStatusSuccess))
 	//m.Server.SendMsg()
 }

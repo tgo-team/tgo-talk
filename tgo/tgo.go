@@ -6,17 +6,19 @@ type TGO struct {
 	Server Server
 	opts   atomic.Value // options
 	*Route
-	exitChan   chan int
-	waitGroup  WaitGroupWrapper
-	Storage    Storage // storage msg
-	monitor    Monitor // Monitor
-	channelMap map[string]Channel
+	exitChan         chan int
+	waitGroup        WaitGroupWrapper
+	Storage          Storage // storage msg
+	monitor          Monitor // Monitor
+	groupChannelMap  map[string]Channel
+	personChannelMap map[string]Channel
 }
 
 func New(opts *Options) *TGO {
 	tg := &TGO{
-		exitChan:   make(chan int, 0),
-		channelMap: map[string]Channel{},
+		exitChan:         make(chan int, 0),
+		groupChannelMap:  map[string]Channel{},
+		personChannelMap: map[string]Channel{},
 	}
 	if opts.Log == nil {
 		opts.Log = NewLog(opts.LogLevel)
@@ -113,11 +115,21 @@ func (t *TGO) TraceMsg(tag string, msgId int64) {
 	t.GetOpts().Log.Info("trace [%d] is %s", msgId, tag)
 }
 
-func (t *TGO) GetChannel(channelName string) Channel {
-	channel, ok := t.channelMap[channelName]
-	if !ok {
-		channel = NewGroupChannel(channelName,t.ctx)
-		t.channelMap[channelName] = channel
+func (t *TGO) GetChannel(channelName string, channelType ChannelType) Channel {
+	var channel Channel
+	var ok bool
+	if channelType == ChannelTypePerson {
+		channel, ok = t.personChannelMap[channelName]
+		if !ok {
+			channel = NewPersonChannel(channelName,t.ctx)
+			t.personChannelMap[channelName] = channel
+		}
+	} else if channelType == ChannelTypeGroup {
+		channel, ok = t.groupChannelMap[channelName]
+		if !ok {
+			channel = NewGroupChannel(channelName,t.ctx)
+			t.groupChannelMap[channelName] = channel
+		}
 	}
 	return channel
 }

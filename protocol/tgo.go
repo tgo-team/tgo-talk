@@ -78,6 +78,11 @@ func (t *TGO) Decode(reader io.Reader) (msg *tgo.Msg,err error)  {
 		return nil, err
 	}
 	msg.Payload = payload
+
+	if msg.MsgType == tgo.MsgTypeSend {
+		msg.Match = "send"
+	}
+
 	return msg, nil
 }
 

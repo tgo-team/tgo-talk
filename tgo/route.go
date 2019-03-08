@@ -2,6 +2,7 @@ package tgo
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"runtime"
 	"sync"
@@ -44,7 +45,7 @@ func (r *Route) Serve(context *MContext) {
 	context.handlers = r.handlers
 	r.handle(context)
 
-	if context.Msg!=nil{
+	if context.Msg!=nil && !context.IsAborted(){
 		matchFunc := r.matchHandlerMap[context.Msg.Match]
 		if matchFunc!=nil {
 			matchFunc(context)
@@ -63,9 +64,10 @@ func (r *Route) Match(match string,handler HandlerFunc)  {
 	r.matchHandlerMap[match] = handler
 }
 
+const abortIndex int8 = math.MaxInt8 / 2
 type MContext struct {
 	Msg * Msg
-	index    int
+	index    int8
 	handlers HandlersChain
 	sync.RWMutex
 	Ctx * Context
@@ -91,26 +93,27 @@ func allocateContext() *MContext {
 
 func (c *MContext) Next() {
 	c.index++
-	for ; c.index < len(c.handlers); c.index++ {
+	for ; c.index < int8(len(c.handlers)); c.index++ {
 		c.handlers[c.index](c)
 	}
 }
 
 func (c *MContext) Abort() {
-	c.index = len(c.handlers)
+	c.index = abortIndex
 }
 
 func (c *MContext) IsAborted() bool {
-	return c.index >= len(c.handlers)
+	return c.index >= abortIndex
 }
 
 func (c *MContext) ReplyMsg(msg *Msg) error  {
 	return c.Server.SendMsg(c.Msg.ClientId,msg)
 }
 
-func (c *MContext) GetChannel(channelName string) Channel  {
 
-	return c.Ctx.TGO.GetChannel(channelName)
+func (c *MContext) GetChannel(channelName string,channelType ChannelType) Channel  {
+
+	return c.Ctx.TGO.GetChannel(channelName,channelType)
 }
 
 func (c *MContext) reset() {
@@ -122,7 +125,7 @@ func (c *MContext) reset() {
 }
 
 func (c *MContext) current() HandlerFunc {
-	if c.index < len(c.handlers) && c.index != -1 {
+	if c.index < int8(len(c.handlers)) && c.index != -1 {
 		return c.handlers[c.index]
 	}
 	return nil

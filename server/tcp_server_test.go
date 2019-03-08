@@ -26,7 +26,7 @@ func TestTCPServer_ReadMsgChan(t *testing.T) {
 	err := s.Start()
 	test.Nil(t,err)
 
-	readMsgChan := s.ReadMsgChan()
+	readMsgChan := s.ReceiveMsgChan()
 
 	go func() {
 		msg :=<-readMsgChan
