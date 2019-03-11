@@ -1,10 +1,11 @@
 package tgo
 
-import "io"
+import (
+	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"io"
+)
 
 type Protocol interface {
-	//Decode 解码
-	Decode(reader io.Reader) (*Msg,error)
-	//Encode 编码
-	Encode(msg *Msg) ([]byte,error)
+	DecodePacket(reader io.Reader) (packets.Packet,error)
+	EncodePacket(packet packets.Packet) ([]byte,error)
 }

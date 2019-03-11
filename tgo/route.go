@@ -2,6 +2,7 @@ package tgo
 
 import (
 	"fmt"
+	"github.com/tgo-team/tgo-chat/tgo/packets"
 	"math"
 	"reflect"
 	"runtime"
@@ -45,12 +46,12 @@ func (r *Route) Serve(context *MContext) {
 	context.handlers = r.handlers
 	r.handle(context)
 
-	if context.Msg!=nil && !context.IsAborted(){
-		matchFunc := r.matchHandlerMap[context.Msg.Match]
-		if matchFunc!=nil {
-			matchFunc(context)
-		}
-	}
+	//if context.Packet!=nil && !context.IsAborted(){
+	//	matchFunc := r.matchHandlerMap[context.Packet.Match]
+	//	if matchFunc!=nil {
+	//		matchFunc(context)
+	//	}
+	//}
 
 }
 
@@ -66,7 +67,7 @@ func (r *Route) Match(match string,handler HandlerFunc)  {
 
 const abortIndex int8 = math.MaxInt8 / 2
 type MContext struct {
-	Msg * Msg
+	Packet packets.Packet
 	index    int8
 	handlers HandlersChain
 	sync.RWMutex
@@ -80,15 +81,15 @@ var pool = sync.Pool{
 	},
 }
 
-func GetMContext(msg *Msg) *MContext {
+func GetMContext(packet packets.Packet) *MContext {
 	mContext := pool.Get().(*MContext)
 	mContext.reset()
-	mContext.Msg = msg
+	mContext.Packet = packet
 	return mContext
 }
 
 func allocateContext() *MContext {
-	return &MContext{index: -1, handlers: nil, Msg: nil, RWMutex: sync.RWMutex{}}
+	return &MContext{index: -1, handlers: nil, Packet: nil, RWMutex: sync.RWMutex{}}
 }
 
 func (c *MContext) Next() {
@@ -106,8 +107,9 @@ func (c *MContext) IsAborted() bool {
 	return c.index >= abortIndex
 }
 
-func (c *MContext) ReplyMsg(msg *Msg) error  {
-	return c.Server.SendMsg(c.Msg.ClientId,msg)
+func (c *MContext) ReplyMsg(packet *packets.Packet) error  {
+	//return c.Server.SendMsg(c.Msg.ClientId,msg)
+	return nil
 }
 
 
@@ -120,7 +122,7 @@ func (c *MContext) reset() {
 	c.Lock()
 	defer c.Unlock()
 	c.index = -1
-	c.Msg = nil
+	c.Packet = nil
 	c.handlers = nil
 }
 

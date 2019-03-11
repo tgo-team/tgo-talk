@@ -1,11 +1,14 @@
 package tgo
 
-import "time"
+import (
+	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"time"
+)
 
 type Server interface {
 	Start() error
-	ReceiveMsgChan() chan *Msg
-	SendMsg(to int64,msg *Msg) error
+	ReceivePacketChan() chan packets.Packet
+	SendMsg(to uint64,packet packets.Packet) error
 	Stop() error
 }
 

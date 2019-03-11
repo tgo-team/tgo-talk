@@ -1,5 +1,5 @@
 package tgo
 
 type Monitor interface {
-	TraceMsg(tag string,msgId int64)
+	//TraceMsg(tag string,msgId MsgID)
 }

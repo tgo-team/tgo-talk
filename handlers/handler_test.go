@@ -23,7 +23,7 @@ func TestHandler(t *testing.T) {
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
 
-	_, err = cn.Write([]byte{0x06})
+	_, err = cn.Write([]byte{byte(tgo.MsgTypePingreq)})
 	test.Nil(t, err)
 
 	time.Sleep(time.Millisecond * 50)
@@ -38,7 +38,7 @@ func TestHandleHeartbeat(t *testing.T) {
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
 
-	_, err = cn.Write([]byte{byte(tgo.MsgTypePing)})
+	_, err = cn.Write([]byte{byte(tgo.MsgTypePingreq)})
 	test.Nil(t, err)
 	time.Sleep(time.Millisecond * 50)
 
@@ -47,7 +47,7 @@ func TestHandleHeartbeat(t *testing.T) {
 	_,err = cn.Read(resultBytes)
 	test.Nil(t,err)
 
-	test.Equal(t,tgo.MsgTypePong,tgo.MsgType(resultBytes[0]))
+	test.Equal(t,tgo.MsgTypePingresp,tgo.MsgType(resultBytes[0]))
 }
 
 func TestHandleAuth(t *testing.T) {
@@ -57,7 +57,7 @@ func TestHandleAuth(t *testing.T) {
 
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
-	msgBytes := []byte{byte(tgo.MsgTypeAuth),5,0x00,0x00,0x00,0,0}
+	msgBytes := []byte{byte(tgo.MsgTypeConnect),5,0x00,0x00,0x00,0,0}
 	msgBytes = append(msgBytes,[]byte("pwd")...)
 	_, err = cn.Write(msgBytes)
 	test.Nil(t, err)
@@ -67,7 +67,7 @@ func TestHandleAuth(t *testing.T) {
 	msg,err := tg.GetOpts().Pro.Decode(cn)
 	test.Nil(t,err)
 
-	test.Equal(t,tgo.MsgTypeAuthACK,msg.MsgType)
+	test.Equal(t,tgo.MsgTypeConnack,msg.MsgType)
 	test.Equal(t,tgo.MsgStatusAuthOk,tgo.AuthStatus(msg.VariableHeader[0]))
 }
 
@@ -79,11 +79,11 @@ func TestHandleRevMsg(t *testing.T) {
 
 	cn, err := MustConnectServer(tg.Server.(*server.TCPServer).RealTCPAddr())
 	test.Nil(t, err)
-	msgBytes := []byte{byte(tgo.MsgTypeAuth),5,0x00,0x00,0x00,0,0}
+	msgBytes := []byte{byte(tgo.MsgTypeConnect),5,0x00,0x00,0x00,0,0}
 	msgBytes = append(msgBytes,[]byte("pwd")...)
 	_, err = cn.Write(msgBytes)
 	test.Nil(t, err)
-	msgBytes = []byte{byte(tgo.MsgTypeSend),7,0x00,0x00,0x00,0,0}
+	msgBytes = []byte{byte(tgo.MsgTypePublish),7,0x00,0x00,0x00,0,0}
 	msgBytes = append(msgBytes,[]byte("hello")...)
 	_, err = cn.Write(msgBytes)
 	test.Nil(t, err)
@@ -91,12 +91,12 @@ func TestHandleRevMsg(t *testing.T) {
 
 	msg,err := tg.GetOpts().Pro.Decode(cn)
 	test.Nil(t,err)
-	test.Equal(t,tgo.MsgTypeAuthACK,msg.MsgType)
+	test.Equal(t,tgo.MsgTypeConnack,msg.MsgType)
 	test.Equal(t,tgo.MsgStatusAuthOk,tgo.AuthStatus(msg.VariableHeader[0]))
 
 	msg,err = tg.GetOpts().Pro.Decode(cn)
 	test.Nil(t,err)
-	test.Equal(t,tgo.MsgTypeSendACK,msg.MsgType)
+	test.Equal(t,tgo.MsgTypePuback,msg.MsgType)
 	test.Equal(t,tgo.MsgStatusSuccess,tgo.MsgStatus(msg.VariableHeader[0]))
 }
 

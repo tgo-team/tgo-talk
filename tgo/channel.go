@@ -2,6 +2,7 @@ package tgo
 
 import (
 	"fmt"
+	"github.com/tgo-team/tgo-chat/tgo/packets"
 	"sync"
 	"sync/atomic"
 )
@@ -16,7 +17,7 @@ func NewConsumer(uid int64, deviceId int64) *Consumer {
 }
 
 type Channel interface {
-	PutMsg(msg *Msg) error
+	PutPacket(packet packets.Packet) error
 	AddConsumer(id string,consumer *Consumer)
 	RemoveConsumer(id string)
 }
@@ -36,7 +37,6 @@ type PersonChannel struct {
 	sync.RWMutex
 	consumers     map[string]*Consumer
 	messageCount  uint64
-	memoryMsgChan chan *Msg
 }
 func NewPersonChannel(channelName string, ctx *Context) *PersonChannel {
 
@@ -44,15 +44,18 @@ func NewPersonChannel(channelName string, ctx *Context) *PersonChannel {
 		ctx:           ctx,
 		channelName:   channelName,
 		consumers:     map[string]*Consumer{},
-		memoryMsgChan: make(chan *Msg, ctx.TGO.GetOpts().MemQueueSize),
 	}
 }
 
-func (p *PersonChannel) PutMsg(msg *Msg) error {
+func (p *PersonChannel) PutPacket(packet packets.Packet) error {
 	select {
-	case p.memoryMsgChan <- msg:
+	case p.ctx.TGO.memoryPacketChan <- packet:
 	default:
-		p.Warn("消息已满！")
+		p.Warn("内存消息已满，进入持久化存储！")
+		err := p.ctx.TGO.Storage.SaveMsg(packet)
+		if err!=nil {
+			return err
+		}
 	}
 	atomic.AddUint64(&p.messageCount, 1)
 	return nil
@@ -83,7 +86,6 @@ type GroupChannel struct {
 	sync.RWMutex
 	consumers     map[string]*Consumer
 	messageCount  uint64
-	memoryMsgChan chan *Msg
 }
 
 func NewGroupChannel(channelName string, ctx *Context) *GroupChannel {
@@ -92,15 +94,18 @@ func NewGroupChannel(channelName string, ctx *Context) *GroupChannel {
 		ctx:           ctx,
 		channelName:   channelName,
 		consumers:     map[string]*Consumer{},
-		memoryMsgChan: make(chan *Msg, ctx.TGO.GetOpts().MemQueueSize),
 	}
 }
 
-func (g *GroupChannel) PutMsg(msg *Msg) error {
+func (g *GroupChannel) PutPacket(packet packets.Packet) error {
 	select {
-	case g.memoryMsgChan <- msg:
+	case g.ctx.TGO.memoryPacketChan <- packet:
 	default:
-		g.Warn("消息已满！")
+		g.Warn("内存消息已满，进入持久化存储！")
+		err := g.ctx.TGO.Storage.SaveMsg(packet)
+		if err!=nil {
+			return err
+		}
 	}
 	atomic.AddUint64(&g.messageCount, 1)
 	return nil

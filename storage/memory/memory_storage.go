@@ -1,8 +1,8 @@
 package memory
 
 import (
-	"fmt"
 	"github.com/tgo-team/tgo-chat/tgo"
+	"github.com/tgo-team/tgo-chat/tgo/packets"
 )
 
 func init()  {
@@ -13,23 +13,22 @@ func init()  {
 }
 
 type Storage struct {
-	receiveMsgChan chan *tgo.Msg
-	msgMap         map[string]*tgo.Msg
+	readMsgChan chan packets.Packet
+	msgMap         map[string]packets.Packet
 }
 
 func NewStorage() *Storage {
 	return &Storage{
-		receiveMsgChan: make(chan *tgo.Msg, 0),
-		msgMap:         make(map[string]*tgo.Msg),
+		readMsgChan: make(chan packets.Packet, 0),
+		msgMap:         make(map[string]packets.Packet),
 	}
 }
 
-func (m *Storage) ReceiveMsgChan() chan *tgo.Msg {
-	return m.receiveMsgChan
+func (m *Storage) ReadMsgChan() chan packets.Packet {
+	return m.readMsgChan
 }
 
-func (m *Storage) SaveMsg(msg *tgo.Msg) error {
-	m.msgMap[fmt.Sprintf("%d-%d", msg.Id, msg.UID)] = msg
-	m.receiveMsgChan <- msg
+func (m *Storage) SaveMsg(msg packets.Packet) error {
+	m.readMsgChan <- msg
 	return nil
 }

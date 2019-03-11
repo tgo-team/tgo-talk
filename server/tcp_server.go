@@ -2,18 +2,18 @@ package server
 
 import (
 	"github.com/tgo-team/tgo-chat/tgo"
+	"github.com/tgo-team/tgo-chat/tgo/packets"
 	"net"
 	"os"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"time"
 )
 
 func init() {
 	tgo.RegistryServer(func(context *tgo.Context) tgo.Server {
 
-		return NewTCPServer(context.TGO.GetOpts())
+		return NewTCPServer(context)
 
 	})
 }
@@ -22,25 +22,26 @@ type TCPServer struct {
 	tcpListener    net.Listener
 	exitChan       chan int
 	waitGroup      tgo.WaitGroupWrapper
-	opts           atomic.Value // options
+	ctx           tgo.Context
 	cm             *clientManager
 	clientExitChan chan tgo.Client // client exit
-	receiveMsgChan    chan *tgo.Msg
+	receivePacketChan    chan packets.Packet
 	storage tgo.Storage
+	opts *tgo.Options
 }
 
-func NewTCPServer(opts *tgo.Options) *TCPServer {
+func NewTCPServer(ctx *tgo.Context) *TCPServer {
 	s := &TCPServer{
 		exitChan:       make(chan int, 0),
 		cm:             newClientManager(),
 		clientExitChan: make(chan tgo.Client, 1024),
-		receiveMsgChan:    make(chan *tgo.Msg, 1024),
+		receivePacketChan:    make(chan packets.Packet, 1024),
+		opts: ctx.TGO.GetOpts(),
 	}
-	s.opts.Store(opts)
 	var err error
-	s.tcpListener, err = net.Listen("tcp", opts.TCPAddress)
+	s.tcpListener, err = net.Listen("tcp", s.opts.TCPAddress)
 	if err != nil {
-		s.Fatal("listen (%s) failed - %s", opts.TCPAddress, err)
+		s.Fatal("listen (%s) failed - %s", s.opts.TCPAddress, err)
 		os.Exit(1)
 	}
 	s.waitGroup.Wrap(s.clientExitLoop)
@@ -48,12 +49,9 @@ func NewTCPServer(opts *tgo.Options) *TCPServer {
 	return s
 }
 
-func (s *TCPServer) storeOpts(opts *tgo.Options) {
-	s.opts.Store(opts)
-}
 
 func (s *TCPServer) GetOpts() *tgo.Options {
-	return s.opts.Load().(*tgo.Options)
+	return s.ctx.TGO.GetOpts()
 }
 
 func (s *TCPServer) Start() error {
@@ -61,15 +59,15 @@ func (s *TCPServer) Start() error {
 	return nil
 }
 
-func (s *TCPServer) ReceiveMsgChan() chan *tgo.Msg {
+func (s *TCPServer) ReceivePacketChan() chan packets.Packet {
 
-	return s.receiveMsgChan
+	return s.receivePacketChan
 }
 
-func (s *TCPServer) SendMsg(to int64, msg *tgo.Msg) error {
+func (s *TCPServer) SendMsg(to uint64, packet packets.Packet) error {
 	cli := s.cm.getClient(to)
 	if cli != nil {
-		msgData, err := s.GetOpts().Pro.Encode(msg)
+		msgData, err := s.GetOpts().Pro.EncodePacket(packet)
 		if err != nil {
 			return err
 		}
@@ -78,7 +76,7 @@ func (s *TCPServer) SendMsg(to int64, msg *tgo.Msg) error {
 	return nil
 }
 
-func (s *TCPServer) SetDeadline(clientId int64, t time.Time) error {
+func (s *TCPServer) SetDeadline(clientId uint64, t time.Time) error {
 	cli := s.cm.getClient(clientId)
 	if cli != nil {
 		return cli.setDeadline(t)
@@ -86,11 +84,11 @@ func (s *TCPServer) SetDeadline(clientId int64, t time.Time) error {
 	return nil
 }
 
-func (s *TCPServer) Keepalive(clientId int64) error  {
+func (s *TCPServer) Keepalive(clientId uint64) error  {
 	return s.SetDeadline(clientId,time.Now().Add(s.GetOpts().MaxHeartbeatInterval*2))
 }
 
-func (s *TCPServer) GetClient(clientId int64) tgo.Client {
+func (s *TCPServer) GetClient(clientId uint64) tgo.Client {
 	cli := s.cm.getClient(clientId)
 	if cli != nil {
 		return cli
@@ -99,7 +97,7 @@ func (s *TCPServer) GetClient(clientId int64) tgo.Client {
 }
 
 
-func (s *TCPServer) AuthClient(clientId,newClientId int64) {
+func (s *TCPServer) AuthClient(clientId,newClientId uint64) {
 	cli := s.cm.getClient(clientId)
 	if cli!=nil {
 		s.cm.removeClient(clientId)
@@ -109,7 +107,7 @@ func (s *TCPServer) AuthClient(clientId,newClientId int64) {
 	}
 }
 
-func (s *TCPServer) ClientIsAuth(clientId int64) bool {
+func (s *TCPServer) ClientIsAuth(clientId uint64) bool {
 	cli := s.cm.getClient(clientId)
 	if cli!=nil {
 		return cli.isAuth
@@ -124,7 +122,7 @@ func (s *TCPServer) Stop() error {
 			return err
 		}
 	}
-	close(s.receiveMsgChan)
+	close(s.receivePacketChan)
 	close(s.clientExitChan)
 	close(s.exitChan)
 	s.waitGroup.Wait()
@@ -163,18 +161,32 @@ exit:
 }
 
 func (s *TCPServer) generateClient(conn net.Conn) {
-	err := conn.SetDeadline(time.Now().Add(time.Second * 2)) // 2 seconds authentication time
-	if err != nil {
-		s.Error("SetDeadline is error - %v", err)
+	packet,err := s.GetOpts().Pro.DecodePacket(conn)
+	if err!=nil {
+		s.Error("connect is error - %v",err)
 		return
 	}
-	client := NewClient(conn, s.receiveMsgChan, s.clientExitChan, s.GetOpts())
+	if packet.GetFixedHeader().PacketType != packets.Connect {
+		s.Error("连接的第一消息必须为Connect类型！")
+		return
+	}
+	connectPacket := packet.(*packets.ConnectPacket)
+	err = s.ctx.TGO.Auth.Auth(connectPacket.ClientIdentifier,string(connectPacket.Password))
+	if err!=nil {
+		s.Error("客户端[%d]认证失败！ - %v",connectPacket.ClientIdentifier,err)
+		return
+	}
+	client := NewClient(conn, s.receivePacketChan, s.clientExitChan, s.GetOpts())
 	if err != nil {
 		s.Error("Client starts failing - %v", err)
 		return
 	}
-	clientId := atomic.AddInt64(&s.cm.clientIDSequence, -1)
-	s.cm.addClient(clientId,client)
+	err = client.setDeadline(time.Now().Add(s.GetOpts().MaxHeartbeatInterval*2))
+	if err!=nil {
+		s.Error("setDeadline is error - %v",err)
+		return
+	}
+	s.cm.addClient(connectPacket.ClientIdentifier,client)
 
 }
 

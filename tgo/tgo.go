@@ -1,6 +1,9 @@
 package tgo
 
-import "sync/atomic"
+import (
+	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"sync/atomic"
+)
 
 type TGO struct {
 	Server Server
@@ -12,6 +15,9 @@ type TGO struct {
 	monitor          Monitor // Monitor
 	groupChannelMap  map[string]Channel
 	personChannelMap map[string]Channel
+	memoryPacketChan    chan packets.Packet
+
+	Auth Auth
 }
 
 func New(opts *Options) *TGO {
@@ -19,6 +25,7 @@ func New(opts *Options) *TGO {
 		exitChan:         make(chan int, 0),
 		groupChannelMap:  map[string]Channel{},
 		personChannelMap: map[string]Channel{},
+		memoryPacketChan:    make(chan packets.Packet, opts.MemQueueSize),
 	}
 	if opts.Log == nil {
 		opts.Log = NewLog(opts.LogLevel)
@@ -42,10 +49,20 @@ func New(opts *Options) *TGO {
 		opts.Log.Fatal("You have not configured storage yet!")
 	}
 
+	//tg.initPQ()
+
 	tg.waitGroup.Wrap(tg.msgLoop)
-	tg.waitGroup.Wrap(tg.storageLoop)
 	return tg
 }
+
+//func (t *TGO) initPQ() {
+//	pqSize := int(math.Max(1, float64(t.ctx.TGO.GetOpts().MemQueueSize)/10))
+//
+//	t.inFlightMutex.Lock()
+//	t.inFlightMessages = make(map[MsgID]*Msg)
+//	t.inFlightPQ = newInFlightPqueue(pqSize)
+//	t.inFlightMutex.Unlock()
+//}
 
 func (t *TGO) Start() error {
 	return t.Server.Start()
@@ -74,16 +91,19 @@ func (t *TGO) GetOpts() *Options {
 func (t *TGO) msgLoop() {
 	for {
 		select {
-		case msg := <-t.Server.ReceiveMsgChan():
-			if msg != nil {
-				err := t.Storage.SaveMsg(msg)
-				if err != nil {
-					t.GetOpts().Log.Error("Failed to store message！- %v", err)
-					continue
-				}
+		case packet := <-t.Server.ReceivePacketChan():
+			if packet != nil {
+				t.GetOpts().Log.Info("Receive the message - %v", packet)
+				t.Serve(GetMContext(packet))
 			} else {
-				t.GetOpts().Log.Warn("Get the message is nil")
+				t.GetOpts().Log.Warn("Receive the message is nil")
 			}
+		case packet := <-t.Storage.ReadMsgChan():
+			t.GetOpts().Log.Info("Storage-ReceiveMsgChan--%v", packet)
+			//t.StartInFlightTimeout(msg, 0)
+		case packet := <-t.memoryPacketChan:
+			t.GetOpts().Log.Info("MemoryMsgChan--%v", packet)
+
 		case <-t.exitChan:
 			goto exit
 
@@ -93,27 +113,6 @@ exit:
 	t.GetOpts().Log.Info("msgLoop is exit!")
 }
 
-func (t *TGO) storageLoop() {
-	for {
-		select {
-		case msg := <-t.Storage.ReceiveMsgChan():
-			if msg != nil {
-				t.GetOpts().Log.Info("storage the message - %v", msg)
-				t.Serve(GetMContext(msg))
-			} else {
-				t.GetOpts().Log.Warn("storage the message is nil")
-			}
-		case <-t.exitChan:
-			goto exit
-		}
-	}
-exit:
-	t.GetOpts().Log.Info("storageLoop is exit!")
-}
-
-func (t *TGO) TraceMsg(tag string, msgId int64) {
-	t.GetOpts().Log.Info("trace [%d] is %s", msgId, tag)
-}
 
 func (t *TGO) GetChannel(channelName string, channelType ChannelType) Channel {
 	var channel Channel
@@ -121,15 +120,16 @@ func (t *TGO) GetChannel(channelName string, channelType ChannelType) Channel {
 	if channelType == ChannelTypePerson {
 		channel, ok = t.personChannelMap[channelName]
 		if !ok {
-			channel = NewPersonChannel(channelName,t.ctx)
+			channel = NewPersonChannel(channelName, t.ctx)
 			t.personChannelMap[channelName] = channel
 		}
 	} else if channelType == ChannelTypeGroup {
 		channel, ok = t.groupChannelMap[channelName]
 		if !ok {
-			channel = NewGroupChannel(channelName,t.ctx)
+			channel = NewGroupChannel(channelName, t.ctx)
 			t.groupChannelMap[channelName] = channel
 		}
 	}
 	return channel
 }
+

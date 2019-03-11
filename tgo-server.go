@@ -2,9 +2,8 @@ package main
 
 import (
 	"github.com/judwhite/go-svc/svc"
-	"github.com/tgo-team/tgo-chat/handlers"
 	_ "github.com/tgo-team/tgo-chat/log"
-	_ "github.com/tgo-team/tgo-chat/protocol"
+	_ "github.com/tgo-team/tgo-chat/protocol/mqtt"
 	_ "github.com/tgo-team/tgo-chat/server"
 	_ "github.com/tgo-team/tgo-chat/storage/memory"
 	"github.com/tgo-team/tgo-chat/tgo"
@@ -37,11 +36,11 @@ func (p *program) Start() error {
 
 	t := tgo.New(tgo.NewOptions())
 	err := t.Start()
-	if err!=nil {
+	if err != nil {
 		panic(err)
 	}
-	t.Use(handlers.HandleAuth)
-	t.Use(handlers.HandleHeartbeat)
+	//t.Use(handlers.HandleAuth)
+	//t.Use(handlers.HandleHeartbeat)
 	p.t = t
 	return nil
 }

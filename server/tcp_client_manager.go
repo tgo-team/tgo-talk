@@ -7,7 +7,7 @@ import (
 // -------------- clientManager -----------------------
 
 type clientManager struct {
-	clients          map[int64]*Client
+	clients          map[uint64]*Client
 	clientLock       sync.RWMutex
 	clientIDSequence int64
 }
@@ -15,11 +15,11 @@ type clientManager struct {
 func newClientManager() *clientManager {
 
 	return &clientManager{
-		clients: make(map[int64]*Client),
+		clients: make(map[uint64]*Client),
 	}
 }
 
-func (cm *clientManager) addClient(clientId int64,client *Client) int64 {
+func (cm *clientManager) addClient(clientId uint64,client *Client) uint64 {
 	client.id = clientId
 	cm.clientLock.Lock()
 	cm.clients[client.id] = client
@@ -27,7 +27,7 @@ func (cm *clientManager) addClient(clientId int64,client *Client) int64 {
 	return clientId
 }
 
-func (cm *clientManager) removeClient(clientId int64) {
+func (cm *clientManager) removeClient(clientId uint64) {
 	cm.clientLock.Lock()
 	_, ok := cm.clients[clientId]
 	if !ok {
@@ -39,7 +39,7 @@ func (cm *clientManager) removeClient(clientId int64) {
 
 }
 
-func (cm *clientManager) getClient(clientId int64) (cli *Client) {
+func (cm *clientManager) getClient(clientId uint64) (cli *Client) {
 	cm.clientLock.Lock()
 	cli = cm.clients[clientId]
 	cm.clientLock.Unlock()
