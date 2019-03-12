@@ -2,9 +2,16 @@ package mqtt
 
 import (
 	"bytes"
-	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"io"
 )
+
+func init()  {
+	tgo.RegistryProtocol("mqtt-im", func() tgo.Protocol {
+		return NewMQTTCodec()
+	})
+}
 
 type MQTTCodec struct {
 }

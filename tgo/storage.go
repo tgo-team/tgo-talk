@@ -1,6 +1,6 @@
 package tgo
 
-import "github.com/tgo-team/tgo-chat/tgo/packets"
+import "github.com/tgo-team/tgo-talk/tgo/packets"
 
 type Storage interface {
 	SaveMsg(packet packets.Packet) error // 保存消息

@@ -1,7 +1,7 @@
 package tgo
 
 import (
-	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"sync/atomic"
 )
 
@@ -15,9 +15,8 @@ type TGO struct {
 	monitor          Monitor // Monitor
 	groupChannelMap  map[string]Channel
 	personChannelMap map[string]Channel
-	memoryPacketChan    chan packets.Packet
-
-	Auth Auth
+	memoryPacketChan chan packets.Packet
+	ConnContextChan chan *ConnContext
 }
 
 func New(opts *Options) *TGO {
@@ -25,28 +24,34 @@ func New(opts *Options) *TGO {
 		exitChan:         make(chan int, 0),
 		groupChannelMap:  map[string]Channel{},
 		personChannelMap: map[string]Channel{},
-		memoryPacketChan:    make(chan packets.Packet, opts.MemQueueSize),
+		memoryPacketChan: make(chan packets.Packet, opts.MemQueueSize),
+		ConnContextChan: make(chan *ConnContext, 1024),
 	}
 	if opts.Log == nil {
 		opts.Log = NewLog(opts.LogLevel)
 	}
-	if opts.Monitor == nil {
-		opts.Monitor = tg
-	}
+	//if opts.Monitor == nil {
+	//	opts.Monitor = tg
+	//}
 	tg.storeOpts(opts)
 
 	ctx := &Context{
 		TGO: tg,
 	}
+
+	// server
 	tg.Server = NewServer(ctx)
 	if tg.Server == nil {
-		opts.Log.Fatal("You have not configured server yet!")
+		opts.Log.Fatal("请先配置Server！")
 	}
 
-	tg.Route = NewRoute(ctx)     // new route
+	// route
+	tg.Route = NewRoute(ctx)
+
+	// storage
 	tg.Storage = NewStorage(ctx) // new storage
 	if tg.Storage == nil {
-		opts.Log.Fatal("You have not configured storage yet!")
+		opts.Log.Fatal("请先配置存储！")
 	}
 
 	//tg.initPQ()
@@ -77,6 +82,7 @@ func (t *TGO) Stop() error {
 		}
 	}
 	t.waitGroup.Wait()
+	t.Info("TGO -> 退出")
 	return nil
 }
 
@@ -91,12 +97,12 @@ func (t *TGO) GetOpts() *Options {
 func (t *TGO) msgLoop() {
 	for {
 		select {
-		case packet := <-t.Server.ReceivePacketChan():
-			if packet != nil {
-				t.GetOpts().Log.Info("Receive the message - %v", packet)
-				t.Serve(GetMContext(packet))
+		case connContext := <-t.ConnContextChan:
+			if connContext != nil {
+				t.Info("收到消息 -> %v", connContext)
+				t.Serve(GetMContext(connContext))
 			} else {
-				t.GetOpts().Log.Warn("Receive the message is nil")
+				t.Warn("Receive the message is nil")
 			}
 		case packet := <-t.Storage.ReadMsgChan():
 			t.GetOpts().Log.Info("Storage-ReceiveMsgChan--%v", packet)
@@ -110,9 +116,8 @@ func (t *TGO) msgLoop() {
 		}
 	}
 exit:
-	t.GetOpts().Log.Info("msgLoop is exit!")
+	t.Debug("停止收取消息。")
 }
-
 
 func (t *TGO) GetChannel(channelName string, channelType ChannelType) Channel {
 	var channel Channel
@@ -132,4 +137,3 @@ func (t *TGO) GetChannel(channelName string, channelType ChannelType) Channel {
 	}
 	return channel
 }
-

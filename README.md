@@ -8,7 +8,7 @@
 
 ## 程序结构
 
-![](docs/tgo-chat包结构.png)
+![](docs/tgo-talk包结构.png)
 
 ## 支持功能
 * [ ] 群聊

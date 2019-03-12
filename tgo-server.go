@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/judwhite/go-svc/svc"
-	_ "github.com/tgo-team/tgo-chat/log"
-	_ "github.com/tgo-team/tgo-chat/protocol/mqtt"
-	_ "github.com/tgo-team/tgo-chat/server"
-	_ "github.com/tgo-team/tgo-chat/storage/memory"
-	"github.com/tgo-team/tgo-chat/tgo"
+	_ "github.com/tgo-team/tgo-talk/log"
+	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
+	_ "github.com/tgo-team/tgo-talk/server"
+	_ "github.com/tgo-team/tgo-talk/storage/memory"
+	"github.com/tgo-team/tgo-talk/tgo"
 	"os"
 	"path/filepath"
 	"syscall"

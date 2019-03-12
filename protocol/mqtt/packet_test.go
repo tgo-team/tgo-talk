@@ -2,8 +2,8 @@ package mqtt
 
 import (
 	"bytes"
-	"github.com/tgo-team/tgo-chat/test"
-	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"github.com/tgo-team/tgo-talk/test"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"testing"
 )
 

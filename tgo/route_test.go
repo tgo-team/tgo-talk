@@ -1,7 +1,7 @@
 package tgo
 
 import (
-	"github.com/tgo-team/tgo-chat/test"
+	"github.com/tgo-team/tgo-talk/test"
 	"testing"
 )
 

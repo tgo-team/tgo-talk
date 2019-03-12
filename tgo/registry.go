@@ -13,6 +13,7 @@ const (
 	newProtocolPrefix = "newProtocol:"
 	newLogPrefix = "newLog:"
 	newStoragePrefix = "newStorage:"
+	newAuthPrefix = "newAuth:"
 )
 
 var registryMap map[string]interface{}
@@ -26,6 +27,7 @@ type newStorageFunc func(*Context) Storage
 
 var clientLock sync.RWMutex
 var tContextLock sync.RWMutex
+type authFunc func(ctx *Context)
 func init()  {
 	registryMap = map[string]interface{}{}
 }

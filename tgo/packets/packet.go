@@ -25,26 +25,27 @@ type FixedHeader struct {
 	Retain          bool
 	RemainingLength int
 }
+
 func (fh FixedHeader) String() string {
 	return fmt.Sprintf("%s: dup: %t qos: %d retain: %t rLength: %d", PacketNames[uint8(fh.PacketType)], fh.Dup, fh.Qos, fh.Retain, fh.RemainingLength)
 }
 
 const (
 	None        PacketType = iota
-	Connect                = 1
-	Connack                = 2
-	Message                = 3
-	Msgack                 = 4
-	Pubrec                 = 5
-	Pubrel                 = 6
-	Pubcomp                = 7
-	Subscribe              = 8
-	Suback                 = 9
-	Unsubscribe            = 10
-	Unsuback               = 11
-	Pingreq                = 12
-	Pingresp               = 13
-	Disconnect             = 14
+	Connect     PacketType = 1
+	Connack     PacketType = 2
+	Message     PacketType = 3
+	Msgack      PacketType = 4
+	Pubrec      PacketType = 5
+	Pubrel      PacketType = 6
+	Pubcomp     PacketType = 7
+	Subscribe   PacketType = 8
+	Suback      PacketType = 9
+	Unsubscribe PacketType = 10
+	Unsuback    PacketType = 11
+	Pingreq     PacketType = 12
+	Pingresp    PacketType = 13
+	Disconnect  PacketType = 14
 )
 
 var PacketNames = map[uint8]string{

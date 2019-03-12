@@ -3,7 +3,7 @@ package mqtt
 import (
 	"bytes"
 	"fmt"
-	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"io"
 )
 

@@ -15,13 +15,20 @@ const (
 
 type ConnackPacket struct {
 	FixedHeader
-	ReturnCode     byte
+	ReturnCode     ConnReturnCode
 }
 
-func NewConnackPacket(fh FixedHeader) *ConnackPacket  {
+func NewConnackPacketWithHeader(fh FixedHeader) *ConnackPacket  {
 	c := &ConnackPacket{}
 	c.FixedHeader = fh
 	return  c
+}
+
+func NewConnackPacket(returnCode ConnReturnCode) *ConnackPacket  {
+	c := &ConnackPacket{}
+	c.PacketType = Connack
+	c.ReturnCode = returnCode
+	return c
 }
 
 

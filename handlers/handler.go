@@ -1,8 +1,15 @@
 package handlers
+
+import (
+	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
+	"time"
+)
+
 //
 //import (
 //	"fmt"
-//	"github.com/tgo-team/tgo-chat/tgo"
+//	"github.com/tgo-team/tgo-talk/tgo"
 //)
 //
 //func HandleAuth(m *tgo.MContext)  {
@@ -88,3 +95,58 @@ package handlers
 //	m.ReplyMsg(tgo.NewSendMsgACK(2334,tgo.MsgStatusSuccess))
 //	//m.Server.SendMsg()
 //}
+
+func HandleAuth(m *tgo.MContext)  {
+	if m.Packet().GetFixedHeader().PacketType == packets.Connect {
+		m.Debug("开始认证！")
+		connectPacket := m.Packet().(*packets.ConnectPacket)
+		if connectPacket.ClientIdentifier == 1 && string(connectPacket.Password) == "123456" {
+			m.Debug("认证成功！")
+			conn := m.Conn()
+			if conn!=nil {
+				statefulConn,ok := conn.(tgo.StatefulConn)
+				if ok {
+					statefulConn.SetAuth(true)
+					statefulConn.SetId(connectPacket.ClientIdentifier)
+					err := statefulConn.SetDeadline(time.Now().Add(m.Ctx.TGO.GetOpts().MaxHeartbeatInterval*2))
+					if err!=nil {
+						m.Error("SetDeadline失败 -> %v",err)
+						return
+					}
+					statefulConn.StartIOLoop()
+					err = m.ReplyMsg(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
+					if err!=nil {
+						m.Error("发送认证ACK失败 -> %v",err)
+					}
+					statefulServer := m.Server().(tgo.StatefulServer)
+					err = statefulServer.AddConn(connectPacket.ClientIdentifier,conn)
+					if err!=nil {
+						m.Error("添加连接失败 -> %v",err)
+						return
+					}
+				}
+			}
+		}else{
+			err := m.ReplyMsg(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
+			if err!=nil {
+				m.Error("发送认证ACK失败 -> %v",err)
+			}
+		}
+		m.Debug("结束认证！")
+	}else{
+		conn := m.Conn()
+		statefulConn,ok := conn.(tgo.StatefulConn)
+		if ok  {
+			if !statefulConn.IsAuth() {
+				err := m.ReplyMsg(packets.NewConnackPacket(packets.ConnReturnCodeUnAuth))
+				if err!=nil {
+					m.Error("发送认证ACK失败 -> %v",err)
+				}
+				m.Abort()
+				return
+			}
+		}else{
+
+		}
+	}
+}

@@ -1,8 +1,8 @@
 package memory
 
 import (
-	"github.com/tgo-team/tgo-chat/tgo"
-	"github.com/tgo-team/tgo-chat/tgo/packets"
+	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
 )
 
 func init()  {

@@ -37,6 +37,6 @@ func NewOptions() *Options {
 		HTTPAddress:          "0.0.0.0:6667",
 		HTTPSAddress:         "0.0.0.0:6443",
 		MaxHeartbeatInterval: 60 * time.Second,
-		Pro:                  NewProtocol("tgo"),
+		Pro:                  NewProtocol("mqtt-im"),
 	}
 }

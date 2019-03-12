@@ -31,6 +31,7 @@ func (lg *Log) Warn(format string,a ...interface{})  {
 }
 
 func (lg *Log) Debug(format string,a ...interface{})  {
+	lg.t.Logf(format,a...)
 }
 
 func (lg *Log) Fatal(format string,a ...interface{})  {

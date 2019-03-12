@@ -2,7 +2,7 @@ package log
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/tgo-team/tgo-chat/tgo"
+	"github.com/tgo-team/tgo-talk/tgo"
 )
 
 
