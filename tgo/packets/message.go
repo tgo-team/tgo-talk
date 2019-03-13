@@ -4,21 +4,27 @@ import "fmt"
 
 type MessagePacket struct {
 	FixedHeader
-	GIDFlag bool  // 是否存在GID
-	UID uint64 // 接受用户的ID
-	GID uint64 // 群组的ID
-	MessageID uint64
-	Payload   []byte
+	ChannelID uint64 // 管道ID
+	MessageID uint64 // 消息唯一编号
+	Payload   []byte // 消息内容
 }
 
-func NewMessagePacket(fh FixedHeader) *MessagePacket  {
+func NewMessagePacket(messageID uint64, channelID uint64, payload []byte) *MessagePacket {
+	return &MessagePacket{
+		ChannelID:   channelID,
+		MessageID:   messageID,
+		Payload:     payload,
+		FixedHeader: FixedHeader{PacketType: Message, Qos: 1},
+	}
+}
+
+func NewMessagePacketHeader(fh FixedHeader) *MessagePacket {
 	p := &MessagePacket{}
 	p.FixedHeader = fh
-	return  p
+	return p
 }
 
-
-func (p *MessagePacket) GetFixedHeader() FixedHeader  {
+func (p *MessagePacket) GetFixedHeader() FixedHeader {
 
 	return p.FixedHeader
 }
@@ -26,7 +32,7 @@ func (p *MessagePacket) GetFixedHeader() FixedHeader  {
 func (p *MessagePacket) String() string {
 	str := fmt.Sprintf("%s", p.FixedHeader)
 	str += " "
-	str += fmt.Sprintf("UID: %d GID: %d MessageID: %d", p.UID,p.GID, p.MessageID)
+	str += fmt.Sprintf("ChannelID: %d MessageID: %d", p.ChannelID, p.MessageID)
 	str += " "
 	str += fmt.Sprintf("payload: %s", string(p.Payload))
 	return str

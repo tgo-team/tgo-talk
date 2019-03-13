@@ -23,10 +23,7 @@ func TestHandle(t *testing.T) {
 	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
 	connPacket := &packets.ConnectPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Connect}, ClientIdentifier: 1, PasswordFlag: true, Password: []byte("123456")}
-	connectData, err := tg.GetOpts().Pro.EncodePacket(connPacket)
-
-	_, err = conn.Write(connectData)
-	test.Nil(t, err)
+	WritePacket(t, conn, connPacket, tg)
 
 	packet := <-packetChan
 	test.Equal(t, connPacket.String(), packet.String())
@@ -38,22 +35,70 @@ func TestHandleAuth(t *testing.T) {
 
 	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
-	connPacket := &packets.ConnectPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Connect}, ClientIdentifier: 1, PasswordFlag: true, Password: []byte("123456")}
-	connectData, err := tg.GetOpts().Pro.EncodePacket(connPacket)
+	sendAuthPacket(t, conn, tg)
 
-	_, err = conn.Write(connectData)
+}
+
+func TestHandleHeartbeat(t *testing.T) {
+	tg := startTGO(t)
+	tg.Use(HandleAuth)
+	tg.Use(HandleHeartbeat)
+
+	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
 
-	connackPacketObj, err := tg.GetOpts().Pro.DecodePacket(conn)
+	sendAuthPacket(t, conn, tg)
+
+	// 心跳
+	pingPacket := &packets.PingreqPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Pingreq}}
+	WritePacket(t, conn, pingPacket, tg)
+
+	pongPacket, ok := ReadPacket(t, conn, tg).(*packets.PingrespPacket)
+	test.Equal(t, true, ok)
+	test.Equal(t, packets.Pingresp, pongPacket.GetFixedHeader().PacketType)
+}
+
+func TestHandleRevMsg(t *testing.T) {
+	tg := startTGO(t)
+	tg.Use(HandleAuth)
+	tg.Use(HandleHeartbeat)
+	tg.Use(HandleRevMsg)
+
+	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
+	sendAuthPacket(t, conn, tg)
+
+	sendMsgPacket(t,conn,tg,packets.NewMessagePacket(100,2,[]byte("hello")))
 
 	time.Sleep(time.Millisecond*50)
 
-	connackPacket, ok := connackPacketObj.(*packets.ConnackPacket)
+}
+
+func sendMsgPacket(t *testing.T, conn net.Conn, tg *tgo.TGO, msgPacket *packets.MessagePacket) {
+	WritePacket(t, conn, msgPacket, tg)
+}
+
+func sendAuthPacket(t *testing.T, conn net.Conn, tg *tgo.TGO) {
+	// 认证
+	connPacket := &packets.ConnectPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Connect}, ClientIdentifier: 1, PasswordFlag: true, Password: []byte("123456")}
+	WritePacket(t, conn, connPacket, tg)
+	connackPacket, ok := ReadPacket(t, conn, tg).(*packets.ConnackPacket)
+
 	test.Equal(t, true, ok)
 	test.Equal(t, packets.Connack, connackPacket.GetFixedHeader().PacketType)
 	test.Equal(t, packets.ConnReturnCodeSuccess, connackPacket.ReturnCode)
+}
 
+func WritePacket(t *testing.T, conn net.Conn, packet packets.Packet, tg *tgo.TGO) {
+	pingData, err := tg.GetOpts().Pro.EncodePacket(packet)
+	test.Nil(t, err)
+	_, err = conn.Write(pingData)
+}
+
+func ReadPacket(t *testing.T, conn net.Conn, tg *tgo.TGO) packets.Packet {
+	packetObj, err := tg.GetOpts().Pro.DecodePacket(conn)
+	test.Nil(t, err)
+	return packetObj
 }
 
 func MustConnectServer(tcpAddr *net.TCPAddr) (net.Conn, error) {

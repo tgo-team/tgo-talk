@@ -58,7 +58,7 @@ func TestMQTTCodec_DecodeAndEncodePackets(t *testing.T) {
 		&packets.ConnackPacket{FixedHeader:packets.FixedHeader{PacketType:packets.Connack},ReturnCode:1},
 		&packets.PingreqPacket{FixedHeader:packets.FixedHeader{PacketType:packets.Pingreq}},
 		&packets.PingrespPacket{FixedHeader:packets.FixedHeader{PacketType:packets.Pingresp}},
-		&packets.MessagePacket{FixedHeader:packets.FixedHeader{Qos:1,PacketType:packets.Message},UID:123,MessageID:234,Payload:[]byte("hello")},
+		&packets.MessagePacket{FixedHeader:packets.FixedHeader{Qos:1,PacketType:packets.Message},ChannelID:123,MessageID:234,Payload:[]byte("hello")},
 		&packets.MsgackPacket{FixedHeader:packets.FixedHeader{PacketType:packets.Msgack},MessageID:234},
 	}
 	codec := &MQTTCodec{}

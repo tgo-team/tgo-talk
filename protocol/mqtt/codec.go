@@ -20,11 +20,17 @@ func NewMQTTCodec() *MQTTCodec  {
 	return &MQTTCodec{}
 }
 
-func (m *MQTTCodec) DecodePacket(reader io.Reader) (packets.Packet, error) {
+func (m *MQTTCodec) DecodePacket(reader tgo.Conn) (packets.Packet, error) {
 	fh, err := m.decodeFixedHeader(reader)
 	if err != nil {
 		return nil, err
 	}
+
+	statefulConn,ok := reader.(tgo.StatefulConn)
+	if ok {
+		fh.From = statefulConn.GetID()
+	}
+
 	if fh.PacketType == packets.Connect {
 		return m.decodeConnect(fh, reader)
 	}

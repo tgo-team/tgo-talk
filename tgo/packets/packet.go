@@ -24,10 +24,11 @@ type FixedHeader struct {
 	Qos             byte
 	Retain          bool
 	RemainingLength int
+	From            uint64 // 发送方ID （如果是TCP可不用参与编码和解码）
 }
 
 func (fh FixedHeader) String() string {
-	return fmt.Sprintf("%s: dup: %t qos: %d retain: %t rLength: %d", PacketNames[uint8(fh.PacketType)], fh.Dup, fh.Qos, fh.Retain, fh.RemainingLength)
+	return fmt.Sprintf("%s: From: %d dup: %t qos: %d retain: %t rLength: %d", PacketNames[uint8(fh.PacketType)],fh.From, fh.Dup, fh.Qos, fh.Retain, fh.RemainingLength)
 }
 
 const (

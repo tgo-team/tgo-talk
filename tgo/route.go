@@ -60,10 +60,10 @@ const abortIndex int8 = math.MaxInt8 / 2
 
 type MContext struct {
 	connContext *ConnContext
-	index      int8
-	handlers   HandlersChain
+	index       int8
+	handlers    HandlersChain
 	sync.RWMutex
-	Ctx    *Context
+	Ctx *Context
 }
 
 var pool = sync.Pool{
@@ -94,13 +94,29 @@ func (c *MContext) Packet() packets.Packet {
 	return c.connContext.Packet
 }
 
+func (c *MContext) PacketType() packets.PacketType {
+
+	return c.Packet().GetFixedHeader().PacketType
+}
+
 func (c *MContext) Conn() Conn {
 	return c.connContext.Conn
 }
 
-func (c *MContext) Server() Server  {
+func (c *MContext) Server() Server {
 
 	return c.connContext.Server
+}
+
+func (c *MContext) Msg() *Msg {
+	messagePacket, ok := c.connContext.Packet.(*packets.MessagePacket)
+	if ok {
+		msg := NewMsg(messagePacket.MessageID,messagePacket.From,messagePacket.Payload)
+		msg.MessageID = messagePacket.MessageID
+		msg.Payload = messagePacket.Payload
+		return msg
+	}
+	return nil
 }
 
 func (c *MContext) Abort() {
@@ -112,20 +128,20 @@ func (c *MContext) IsAborted() bool {
 }
 
 func (c *MContext) ReplyMsg(packet packets.Packet) error {
-	data,err := c.Ctx.TGO.GetOpts().Pro.EncodePacket(packet)
-	if err!=nil {
+	data, err := c.Ctx.TGO.GetOpts().Pro.EncodePacket(packet)
+	if err != nil {
 		return err
 	}
-	_,err = c.Conn().Write(data)
-	if err!=nil {
+	_, err = c.Conn().Write(data)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *MContext) GetChannel(channelName string, channelType ChannelType) Channel {
+func (c *MContext) GetChannel(channelID uint64) *Channel {
 
-	return c.Ctx.TGO.GetChannel(channelName, channelType)
+	return c.Ctx.TGO.GetChannel(channelID)
 }
 
 func (c *MContext) reset() {

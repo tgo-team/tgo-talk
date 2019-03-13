@@ -12,6 +12,7 @@ type StatefulConn interface {
 	StartIOLoop()
 	SetAuth(auth bool)
 	IsAuth() bool
-	SetId(id uint64)
+	SetID(id uint64)
+	GetID() uint64
 	SetDeadline(t time.Time) error
 }

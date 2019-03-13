@@ -124,11 +124,16 @@ exit:
 }
 
 func (s *Server) generateConn(conn net.Conn) {
-	conn.SetDeadline(time.Now().Add(time.Second*1)) // 第一次连接给1秒钟的认证时间，认证成功后将重新设置Deadline
+	err := conn.SetDeadline(time.Now().Add(time.Second*1)) // 第一次连接给1秒钟的认证时间，认证成功后将重新设置Deadline
+	if err!=nil {
+		s.exitChan <- 1
+		return
+	}
 	cn := NewConn(conn,s.connContextChan,s.connExitChan,s,s.GetOpts())
 	packet, err := s.pro.DecodePacket(cn)
 	if err != nil {
 		s.Error("解析连接数据失败！-> %v", err)
+		s.exitChan <- 1
 		return
 	}
 	s.connContextChan <- tgo.NewPacketConn(packet,cn,s)
@@ -137,11 +142,12 @@ func (s *Server) generateConn(conn net.Conn) {
 func (s *Server) connExitLoop() {
 	for {
 		select {
-		case cli := <-s.connExitChan:
-			if cli != nil {
-				s.Debug("客户端[%v]退出！", cli)
+		case conn := <-s.connExitChan:
+			if conn != nil {
+				s.Debug("客户端[%v]退出！", conn)
+				cn := conn.(*Conn)
+				s.cm.removeConn(cn.id)
 			}
-			//s.cm.removeClient(cli)
 		case <-s.exitChan:
 			goto exit
 

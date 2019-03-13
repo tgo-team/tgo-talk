@@ -107,7 +107,7 @@ func HandleAuth(m *tgo.MContext)  {
 				statefulConn,ok := conn.(tgo.StatefulConn)
 				if ok {
 					statefulConn.SetAuth(true)
-					statefulConn.SetId(connectPacket.ClientIdentifier)
+					statefulConn.SetID(connectPacket.ClientIdentifier)
 					err := statefulConn.SetDeadline(time.Now().Add(m.Ctx.TGO.GetOpts().MaxHeartbeatInterval*2))
 					if err!=nil {
 						m.Error("SetDeadline失败 -> %v",err)
@@ -149,4 +149,38 @@ func HandleAuth(m *tgo.MContext)  {
 
 		}
 	}
+}
+
+// HandleHeartbeat
+func HandleHeartbeat(m *tgo.MContext)  {
+	var err error
+	statefulConn,ok := m.Conn().(tgo.StatefulConn)
+	if ok {
+		// 有消息往来就保活
+		err = statefulConn.SetDeadline(time.Now().Add(m.Ctx.TGO.GetOpts().MaxHeartbeatInterval*2))
+		if err!=nil {
+			m.Error("客户端[%d]设置保活失败！-> %v",statefulConn.GetID(),err)
+			return
+		}
+	}
+	if m.PacketType() == packets.Pingreq {
+		err = m.ReplyMsg(packets.NewPingrespPacket())
+		if err!=nil {
+			m.Error("回复心跳包失败 -> %v",err)
+			return
+		}
+	}
+}
+
+
+func HandleRevMsg(m *tgo.MContext)  {
+	if m.PacketType() == packets.Message {
+		messagePacket := m.Packet().(*packets.MessagePacket)
+		channel := m.GetChannel(messagePacket.ChannelID)
+		err := channel.PutMsg(m.Msg())
+		if err!=nil {
+			return
+		}
+	}
+
 }

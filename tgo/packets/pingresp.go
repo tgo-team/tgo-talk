@@ -6,9 +6,15 @@ type PingrespPacket struct {
 	FixedHeader
 }
 
-func NewPingrespPacket(fh FixedHeader) *PingrespPacket  {
+func NewPingrespPacketWithHeader(fh FixedHeader) *PingrespPacket  {
 	pr := &PingrespPacket{}
 	pr.FixedHeader = fh
+	return pr
+}
+
+func NewPingrespPacket() *PingrespPacket {
+	pr := &PingrespPacket{}
+	pr.PacketType = Pingresp
 	return pr
 }
 

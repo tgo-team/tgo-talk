@@ -10,6 +10,7 @@ import (
 type connManager struct {
 	conns          map[uint64]tgo.Conn
 	connLock       sync.RWMutex
+	clientIDSequence int64
 }
 
 func newConnManager() *connManager {

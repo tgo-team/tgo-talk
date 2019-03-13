@@ -11,16 +11,10 @@ import (
 //  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 //  | gid flag |
 func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *packets.MessagePacket, error) {
-	msg := packets.NewMessagePacket(*fh)
+	msg := packets.NewMessagePacketHeader(*fh)
 	var payloadLength = msg.RemainingLength
-	options := decodeByte(reader)
-	msg.GIDFlag = (options>>7) >0
-	msg.UID = decodeUint64(reader)
-	payloadLength -= 8 + 1// 减去 uid的长度 + options的长度
-	if msg.GIDFlag {
-		msg.GID = decodeUint64(reader)
-		payloadLength -= 8 // 减去gid长度
-	}
+	msg.ChannelID = decodeUint64(reader)
+	payloadLength -= 8 // 减去 ChannelID的长度
 	if msg.Qos > 0 {
 		msg.MessageID = decodeUint64(reader)
 		payloadLength -=  8 // 减去messageID长度
@@ -36,11 +30,7 @@ func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *p
 func (m *MQTTCodec) encodeMessage(packet packets.Packet) ([]byte, error) {
 	msg := packet.(*packets.MessagePacket)
 	var body bytes.Buffer
-	body.WriteByte(boolToByte(msg.GIDFlag)<<7)
-	body.Write(encodeUint64(msg.UID))
-	if msg.GIDFlag {
-		body.Write(encodeUint64(msg.GID))
-	}
+	body.Write(encodeUint64(msg.ChannelID))
 	if msg.Qos > 0 {
 		body.Write(encodeUint64(msg.MessageID))
 	}

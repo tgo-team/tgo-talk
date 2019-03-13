@@ -53,7 +53,7 @@ func (c *Conn) ioLoop() {
 		case <-c.exitChan:
 			goto exit
 		default:
-			packet, err := c.GetOpts().Pro.DecodePacket(c.conn)
+			packet, err := c.GetOpts().Pro.DecodePacket(c)
 			if err != nil {
 				c.Error("Decoding message failed - %v", err)
 				goto exit
@@ -100,8 +100,12 @@ func (c *Conn)  IsAuth() bool {
 	return c.isAuth
 }
 
-func (c *Conn) SetId(id uint64)  {
+func (c *Conn) SetID(id uint64)  {
 	c.id = id
+}
+
+func (c *Conn) GetID() uint64  {
+	return c.id
 }
 
 func (c *Conn) SetDeadline(t time.Time) error  {
