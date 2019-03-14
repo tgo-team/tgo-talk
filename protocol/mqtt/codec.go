@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func init()  {
+func init() {
 	tgo.RegistryProtocol("mqtt-im", func() tgo.Protocol {
 		return NewMQTTCodec()
 	})
@@ -16,7 +16,7 @@ func init()  {
 type MQTTCodec struct {
 }
 
-func NewMQTTCodec() *MQTTCodec  {
+func NewMQTTCodec() *MQTTCodec {
 	return &MQTTCodec{}
 }
 
@@ -117,7 +117,7 @@ func (m *MQTTCodec) decodeFixedHeader(reader io.Reader) (*packets.FixedHeader, e
 func (m *MQTTCodec) encodeFixedHeader(packet packets.Packet) ([]byte, error) {
 	fh := packet.GetFixedHeader()
 	var header bytes.Buffer
-	header.WriteByte(byte(packet.GetFixedHeader().PacketType)<<4 | boolToByte(fh.Dup)<<3 | fh.Qos<<1 | boolToByte(fh.Retain))
+	header.WriteByte(byte(packet.GetFixedHeader().PacketType)<<4 | packets.BoolToByte(fh.Dup)<<3 | fh.Qos<<1 | packets.BoolToByte(fh.Retain))
 	header.Write(encodeLength(fh.RemainingLength))
 	return header.Bytes(), nil
 }

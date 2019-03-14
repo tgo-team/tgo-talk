@@ -8,8 +8,8 @@ import (
 
 func (m *MQTTCodec) decodeConnack(fh *packets.FixedHeader,reader io.Reader) (*packets.ConnackPacket, error) {
 	c :=packets.NewConnackPacketWithHeader(*fh)
-	decodeByte(reader)
-	c.ReturnCode = packets.ConnReturnCode(decodeByte(reader))
+	packets.DecodeByte(reader)
+	c.ReturnCode = packets.ConnReturnCode(packets.DecodeByte(reader))
 	c.FixedHeader = *fh
 	return c,nil
 }

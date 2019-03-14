@@ -8,9 +8,9 @@ import (
 
 func (m *MQTTCodec) decodeConnect(fh *packets.FixedHeader, reader io.Reader) (*packets.ConnectPacket, error) {
 	c := packets.NewConnectPacket(*fh)
-	var _ = decodeString(reader)
-	var _ = decodeByte(reader)
-	options := decodeByte(reader)
+	var _ = packets.DecodeString(reader)
+	var _ = packets.DecodeByte(reader)
+	options := packets.DecodeByte(reader)
 	_ = 1 & options        // ReservedBit
 	_ = 1&(options>>1) > 0 // CleanSession
 	_ = 1&(options>>2) > 0 // WillFlag
@@ -18,13 +18,13 @@ func (m *MQTTCodec) decodeConnect(fh *packets.FixedHeader, reader io.Reader) (*p
 	_ = 1&(options>>5) > 0 //WillRetain
 	c.PasswordFlag = 1&(options>>6) > 0
 	c.UsernameFlag = 1&(options>>7) > 0
-	c.Keepalive = decodeUint16(reader)
-	c.ClientIdentifier = decodeUint64(reader)
+	c.Keepalive = packets.DecodeUint16(reader)
+	c.ClientIdentifier = packets.DecodeUint64(reader)
 	if c.UsernameFlag {
-		c.Username = decodeString(reader)
+		c.Username = packets.DecodeString(reader)
 	}
 	if c.PasswordFlag {
-		c.Password = decodeBytes(reader)
+		c.Password = packets.DecodeBytes(reader)
 	}
 	return c, nil
 }
@@ -32,16 +32,16 @@ func (m *MQTTCodec) decodeConnect(fh *packets.FixedHeader, reader io.Reader) (*p
 func (m *MQTTCodec) encodeConnect(packet packets.Packet) ([]byte, error) {
 	c := packet.(*packets.ConnectPacket)
 	var body bytes.Buffer
-	body.Write(encodeString("MQTT"))
+	body.Write(packets.EncodeString("MQTT"))
 	body.WriteByte(0x04)
-	body.WriteByte(boolToByte(false)<<1 | boolToByte(false)<<2 | 0<<3 | boolToByte(false)<<5 | boolToByte(c.PasswordFlag)<<6 | boolToByte(c.UsernameFlag)<<7)
-	body.Write(encodeUint16(c.Keepalive))
-	body.Write(encodeUint64(c.ClientIdentifier))
+	body.WriteByte(packets.BoolToByte(false)<<1 | packets.BoolToByte(false)<<2 | 0<<3 | packets.BoolToByte(false)<<5 | packets.BoolToByte(c.PasswordFlag)<<6 | packets.BoolToByte(c.UsernameFlag)<<7)
+	body.Write(packets.EncodeUint16(c.Keepalive))
+	body.Write(packets.EncodeUint64(c.ClientIdentifier))
 	if c.UsernameFlag {
-		body.Write(encodeString(c.Username))
+		body.Write(packets.EncodeString(c.Username))
 	}
 	if c.PasswordFlag {
-		body.Write(encodeBytes(c.Password))
+		body.Write(packets.EncodeBytes(c.Password))
 	}
 	c.RemainingLength = body.Len()
 	return body.Bytes(), nil

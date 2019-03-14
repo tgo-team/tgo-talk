@@ -139,7 +139,7 @@ func (c *MContext) ReplyMsg(packet packets.Packet) error {
 	return nil
 }
 
-func (c *MContext) GetChannel(channelID uint64) *Channel {
+func (c *MContext) GetChannel(channelID uint64) (*Channel,error) {
 
 	return c.Ctx.TGO.GetChannel(channelID)
 }

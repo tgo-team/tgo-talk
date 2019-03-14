@@ -13,10 +13,10 @@ import (
 func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *packets.MessagePacket, error) {
 	msg := packets.NewMessagePacketHeader(*fh)
 	var payloadLength = msg.RemainingLength
-	msg.ChannelID = decodeUint64(reader)
+	msg.ChannelID = packets.DecodeUint64(reader)
 	payloadLength -= 8 // 减去 ChannelID的长度
 	if msg.Qos > 0 {
-		msg.MessageID = decodeUint64(reader)
+		msg.MessageID = packets.DecodeUint64(reader)
 		payloadLength -=  8 // 减去messageID长度
 	}
 	if payloadLength < 0 {
@@ -30,9 +30,9 @@ func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *p
 func (m *MQTTCodec) encodeMessage(packet packets.Packet) ([]byte, error) {
 	msg := packet.(*packets.MessagePacket)
 	var body bytes.Buffer
-	body.Write(encodeUint64(msg.ChannelID))
+	body.Write(packets.EncodeUint64(msg.ChannelID))
 	if msg.Qos > 0 {
-		body.Write(encodeUint64(msg.MessageID))
+		body.Write(packets.EncodeUint64(msg.MessageID))
 	}
 	body.Write(msg.Payload)
 	msg.RemainingLength = body.Len()

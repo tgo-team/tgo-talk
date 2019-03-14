@@ -8,21 +8,23 @@ type TGO struct {
 	Server Server
 	opts   atomic.Value // options
 	*Route
-	exitChan         chan int
-	waitGroup        WaitGroupWrapper
-	Storage          Storage // storage msg
-	monitor          Monitor // Monitor
-	channelMap map[uint64]*Channel
-	memoryMsgChan chan *MsgContext
+	exitChan        chan int
+	waitGroup       WaitGroupWrapper
+	Storage         Storage // storage msg
+	monitor         Monitor // Monitor
+	channelMap      map[uint64]*Channel
+	memoryMsgChan   chan *MsgContext
 	ConnContextChan chan *ConnContext
+	ConnManager *connManager
 }
 
 func New(opts *Options) *TGO {
 	tg := &TGO{
-		exitChan:         make(chan int, 0),
-		channelMap: map[uint64]*Channel{},
-		memoryMsgChan: make(chan *MsgContext, opts.MemQueueSize),
+		exitChan:        make(chan int, 0),
+		channelMap:      map[uint64]*Channel{},
+		memoryMsgChan:   make(chan *MsgContext, opts.MemQueueSize),
 		ConnContextChan: make(chan *ConnContext, 1024),
+		ConnManager: newConnManager(),
 	}
 	if opts.Log == nil {
 		opts.Log = NewLog(opts.LogLevel)
@@ -51,20 +53,9 @@ func New(opts *Options) *TGO {
 		opts.Log.Fatal("请先配置存储！")
 	}
 
-	//tg.initPQ()
-
 	tg.waitGroup.Wrap(tg.msgLoop)
 	return tg
 }
-
-//func (t *TGO) initPQ() {
-//	pqSize := int(math.Max(1, float64(t.ctx.TGO.GetOpts().MemQueueSize)/10))
-//
-//	t.inFlightMutex.Lock()
-//	t.inFlightMessages = make(map[MsgID]*Msg)
-//	t.inFlightPQ = newInFlightPqueue(pqSize)
-//	t.inFlightMutex.Unlock()
-//}
 
 func (t *TGO) Start() error {
 	return t.Server.Start()
@@ -101,9 +92,16 @@ func (t *TGO) msgLoop() {
 			} else {
 				t.Warn("Receive the message is nil")
 			}
-		case packet := <-t.Storage.ReadMsgChan():
-			t.GetOpts().Log.Info("Storage-ReceiveMsgChan--%v", packet)
-			//t.StartInFlightTimeout(msg, 0)
+		case msgContext := <-t.Storage.StorageMsgChan():
+			if msgContext != nil {
+				t.GetOpts().Log.Info("Storage-ReceiveMsgChan--%v", msgContext)
+				channel, err := t.GetChannel(msgContext.ChannelID())
+				if err != nil {
+
+				}
+				println(channel)
+				//t.StartInFlightTimeout(msg, 0)
+			}
 		case msgContext := <-t.memoryMsgChan:
 			t.GetOpts().Log.Info("MemoryMsgChan--%v", msgContext)
 
@@ -116,11 +114,35 @@ exit:
 	t.Debug("停止收取消息。")
 }
 
-func (t *TGO) GetChannel(channelID uint64) *Channel {
+func (t *TGO) GetChannel(channelID uint64) (*Channel, error) {
 	channel, ok := t.channelMap[channelID]
+	var err error
 	if !ok {
-		channel = NewChannel(channelID, t.ctx)
-		t.channelMap[channelID] = channel
+		channel, err = t.Storage.GetChannel(channelID)
+		if err != nil {
+			return nil, err
+		}
+		if channel != nil {
+			t.channelMap[channelID] = channel
+		}
 	}
-	return channel
+	return channel, nil
+}
+
+func (t *TGO) startPushMsg(msgCtx MsgContext)  {
+	clientIDs,err := t.Storage.GetClientIDs(msgCtx.channelID)
+	if err!=nil {
+		t.Error("获取管道[%d]的客户端ID集合失败！ -> %v",err)
+		return
+	}
+	for _,clientID :=range clientIDs {
+		if clientID == msgCtx.Msg().From { // 不发送给自己
+			continue
+		}
+		online := IsOnline(clientID)
+		if online {
+
+		}
+	}
+
 }

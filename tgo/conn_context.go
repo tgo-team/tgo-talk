@@ -10,7 +10,7 @@ type ConnContext struct {
 	Server Server
 }
 
-func NewPacketConn(packet packets.Packet,conn Conn,server Server) *ConnContext {
+func NewConnContext(packet packets.Packet,conn Conn,server Server) *ConnContext {
 	return &ConnContext{
 		Packet: packet,
 		Conn:conn,

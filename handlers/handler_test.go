@@ -64,13 +64,15 @@ func TestHandleRevMsg(t *testing.T) {
 	tg.Use(HandleHeartbeat)
 	tg.Use(HandleRevMsg)
 
+	tg.Storage.SaveChannel(tgo.NewChannel(2,1,nil))
+
 	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
 	sendAuthPacket(t, conn, tg)
 
-	sendMsgPacket(t,conn,tg,packets.NewMessagePacket(100,2,[]byte("hello")))
+	sendMsgPacket(t, conn, tg, packets.NewMessagePacket(100, 2, []byte("hello")))
 
-	time.Sleep(time.Millisecond*50)
+	time.Sleep(time.Millisecond * 50)
 
 }
 
@@ -96,7 +98,7 @@ func WritePacket(t *testing.T, conn net.Conn, packet packets.Packet, tg *tgo.TGO
 }
 
 func ReadPacket(t *testing.T, conn net.Conn, tg *tgo.TGO) packets.Packet {
-	packetObj, err := tg.GetOpts().Pro.DecodePacket(conn)
+	packetObj, err := tg.GetOpts().Pro.DecodePacket(tcp.NewConn(conn,nil,nil))
 	test.Nil(t, err)
 	return packetObj
 }

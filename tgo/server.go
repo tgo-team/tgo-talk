@@ -14,5 +14,5 @@ type Server interface {
 //}
 
 type StatefulServer interface {
-	AddConn(clientID uint64,conn Conn) error
+	//AddConn(clientID uint64,conn Conn) error
 }

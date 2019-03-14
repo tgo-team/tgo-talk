@@ -1,14 +1,13 @@
-package tcp
+package tgo
 
 import (
-	"github.com/tgo-team/tgo-talk/tgo"
 	"sync"
 )
 
 // -------------- clientManager -----------------------
 
 type connManager struct {
-	conns          map[uint64]tgo.Conn
+	conns          map[uint64]Conn
 	connLock       sync.RWMutex
 	clientIDSequence int64
 }
@@ -16,18 +15,18 @@ type connManager struct {
 func newConnManager() *connManager {
 
 	return &connManager{
-		conns: make(map[uint64]tgo.Conn),
+		conns: make(map[uint64]Conn),
 	}
 }
 
-func (cm *connManager) addConn(connID uint64,conn tgo.Conn) uint64 {
+func (cm *connManager) AddConn(connID uint64,conn Conn) uint64 {
 	cm.connLock.Lock()
 	cm.conns[connID] = conn
 	cm.connLock.Unlock()
 	return connID
 }
 
-func (cm *connManager) removeConn(connID uint64) {
+func (cm *connManager) RemoveConn(connID uint64) {
 	cm.connLock.Lock()
 	_, ok := cm.conns[connID]
 	if !ok {
@@ -39,8 +38,8 @@ func (cm *connManager) removeConn(connID uint64) {
 
 }
 
-func (cm *connManager) getConn(clientId uint64) tgo.Conn {
+func (cm *connManager) GetConn(connID uint64) Conn {
 	cm.connLock.Lock()
 	defer cm.connLock.Unlock()
-	return cm.conns[clientId]
+	return cm.conns[connID]
 }

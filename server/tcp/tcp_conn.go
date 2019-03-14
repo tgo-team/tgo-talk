@@ -9,37 +9,43 @@ import (
 	"time"
 )
 
-type Conn struct {
-	id             uint64
-	conn           net.Conn
-	exitChan       chan int        // Only  notify self exits
-	connExitChan chan tgo.Conn // Client exit notify server
-	waitGroup      tgo.WaitGroupWrapper
-	sync.RWMutex
+type ConnChan struct {
 	connContextChan chan *tgo.ConnContext
-	opts              atomic.Value // options
-	isAuth            bool
-	server tgo.Server
+	connExitChan    chan tgo.Conn
 }
 
-func NewConn(conn net.Conn, connContextChan chan *tgo.ConnContext, connExitChan chan tgo.Conn,server tgo.Server, opts *tgo.Options) *Conn {
-	c := &Conn{
-		conn:              conn,
-		connContextChan: connContextChan,
-		connExitChan:    connExitChan,
-		exitChan:          make(chan int, 0),
-		server: server,
+func NewConnChan(connContextChan chan *tgo.ConnContext,connExitChan    chan tgo.Conn ) *ConnChan {
+	return &ConnChan{
+		connContextChan:connContextChan,
+		connExitChan:connExitChan,
 	}
-	c.storeOpts(opts)
+}
+
+type Conn struct {
+	id        uint64
+	conn      net.Conn
+	exitChan  chan int // Only  notify self exits
+	waitGroup tgo.WaitGroupWrapper
+	sync.RWMutex
+	opts   atomic.Value // options
+	isAuth bool
+	ctx    *tgo.Context
+	connChan *ConnChan
+}
+
+func NewConn(conn net.Conn, connChan *ConnChan, ctx *tgo.Context) *Conn {
+	c := &Conn{
+		conn:     conn,
+		exitChan: make(chan int, 0),
+		ctx:      ctx,
+		connChan: connChan,
+	}
 	return c
 }
 
-func (c *Conn) storeOpts(opts *tgo.Options) {
-	c.opts.Store(opts)
-}
 
 func (c *Conn) GetOpts() *tgo.Options {
-	return c.opts.Load().(*tgo.Options)
+	return c.ctx.TGO.GetOpts()
 }
 
 func (c *Conn) StartIOLoop() {
@@ -58,12 +64,17 @@ func (c *Conn) ioLoop() {
 				c.Error("Decoding message failed - %v", err)
 				goto exit
 			}
-			c.connContextChan <- tgo.NewPacketConn(packet,c,c.server)
+			if c.connChan!=nil && c.connChan.connContextChan!=nil {
+				c.connChan.connContextChan <- tgo.NewConnContext(packet, c, c.ctx.TGO.Server)
+			}
+
 		}
 	}
 
 exit:
-	c.connExitChan <- c
+	if c.connChan!=nil && c.connChan.connExitChan!=nil {
+		c.connChan.connExitChan <- c
+	}
 	c.Debug("msgLoop is exit")
 }
 
@@ -72,11 +83,11 @@ func (c *Conn) setDeadline(t time.Time) error {
 	return err
 }
 
-func (c *Conn) Write(data []byte) (int,error) {
+func (c *Conn) Write(data []byte) (int, error) {
 	return c.conn.Write(data)
 }
 
-func (c *Conn) Read(b []byte) (int,error) {
+func (c *Conn) Read(b []byte) (int, error) {
 	return c.conn.Read(b)
 }
 func (c *Conn) Exit() error {
@@ -93,22 +104,22 @@ func (c *Conn) Exit() error {
 
 // --------- stateful conn -----------
 
-func (c *Conn)  SetAuth(auth bool)  {
+func (c *Conn) SetAuth(auth bool) {
 	c.isAuth = auth
 }
-func (c *Conn)  IsAuth() bool {
+func (c *Conn) IsAuth() bool {
 	return c.isAuth
 }
 
-func (c *Conn) SetID(id uint64)  {
+func (c *Conn) SetID(id uint64) {
 	c.id = id
 }
 
-func (c *Conn) GetID() uint64  {
+func (c *Conn) GetID() uint64 {
 	return c.id
 }
 
-func (c *Conn) SetDeadline(t time.Time) error  {
+func (c *Conn) SetDeadline(t time.Time) error {
 	return c.conn.SetDeadline(t)
 }
 

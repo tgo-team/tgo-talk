@@ -20,22 +20,22 @@ type Server struct {
 	tcpListener    net.Listener
 	exitChan       chan int
 	waitGroup      tgo.WaitGroupWrapper
-	cm             *connManager
 	connExitChan chan tgo.Conn // client exit
 	connContextChan     chan *tgo.ConnContext
 	storage        tgo.Storage
 	opts           *tgo.Options
 	pro            tgo.Protocol
+	ctx *tgo.Context
 }
 
 func NewServer(ctx *tgo.Context) *Server {
 	s := &Server{
 		exitChan:       make(chan int, 0),
-		cm:             newConnManager(),
 		connExitChan: make(chan tgo.Conn, 1024),
 		connContextChan:     ctx.TGO.ConnContextChan,
 		opts:           ctx.TGO.GetOpts(),
 		pro:            ctx.TGO.GetOpts().Pro,
+		ctx:ctx,
 	}
 	var err error
 	s.tcpListener, err = net.Listen("tcp", s.opts.TCPAddress)
@@ -86,11 +86,7 @@ func (s *Server) Stop() error {
 	return nil
 }
 
-// ---------- StatefulServer -----------------
-func (s *Server) AddConn(connID uint64,conn tgo.Conn) error {
-	s.cm.addConn(connID,conn)
-	return nil
-}
+
 
 func (s *Server) connLoop() {
 	s.Info("开始监听 -> %s", s.tcpListener.Addr())
@@ -129,14 +125,14 @@ func (s *Server) generateConn(conn net.Conn) {
 		s.exitChan <- 1
 		return
 	}
-	cn := NewConn(conn,s.connContextChan,s.connExitChan,s,s.GetOpts())
+	cn := NewConn(conn,NewConnChan(s.connContextChan,s.connExitChan),s.ctx)
 	packet, err := s.pro.DecodePacket(cn)
 	if err != nil {
 		s.Error("解析连接数据失败！-> %v", err)
 		s.exitChan <- 1
 		return
 	}
-	s.connContextChan <- tgo.NewPacketConn(packet,cn,s)
+	s.connContextChan <- tgo.NewConnContext(packet,cn,s)
 }
 
 func (s *Server) connExitLoop() {
@@ -146,7 +142,7 @@ func (s *Server) connExitLoop() {
 			if conn != nil {
 				s.Debug("客户端[%v]退出！", conn)
 				cn := conn.(*Conn)
-				s.cm.removeConn(cn.id)
+				s.ctx.TGO.ConnManager.RemoveConn(cn.id)
 			}
 		case <-s.exitChan:
 			goto exit
