@@ -4,7 +4,7 @@ import (
 	"github.com/judwhite/go-svc/svc"
 	_ "github.com/tgo-team/tgo-talk/log"
 	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
-	_ "github.com/tgo-team/tgo-talk/server"
+	_ "github.com/tgo-team/tgo-talk/server/tcp"
 	_ "github.com/tgo-team/tgo-talk/storage/memory"
 	"github.com/tgo-team/tgo-talk/tgo"
 	"os"
@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-
 	prg := &program{}
 	if err := svc.Run(prg, syscall.SIGINT, syscall.SIGTERM); err != nil {
 		panic(err)
