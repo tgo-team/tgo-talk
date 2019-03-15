@@ -103,7 +103,7 @@ func (t *TGO) msgLoop() {
 				//t.StartInFlightTimeout(msg, 0)
 			}
 		case msgContext := <-t.memoryMsgChan:
-			t.GetOpts().Log.Info("MemoryMsgChan--%v", msgContext)
+			t.startPushMsg(msgContext)
 
 		case <-t.exitChan:
 			goto exit
@@ -129,7 +129,8 @@ func (t *TGO) GetChannel(channelID uint64) (*Channel, error) {
 	return channel, nil
 }
 
-func (t *TGO) startPushMsg(msgCtx MsgContext)  {
+func (t *TGO) startPushMsg(msgCtx *MsgContext)  {
+	t.Debug("将消息[%d]下发到管道[%d]！",msgCtx.Msg().MessageID,msgCtx.channelID)
 	clientIDs,err := t.Storage.GetClientIDs(msgCtx.channelID)
 	if err!=nil {
 		t.Error("获取管道[%d]的客户端ID集合失败！ -> %v",err)

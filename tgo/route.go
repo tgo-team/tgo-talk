@@ -38,12 +38,14 @@ func (r *Route) Serve(context *MContext) {
 	context.handlers = r.handlers
 	r.handle(context)
 
-	//if context.Packet!=nil && !context.IsAborted(){
-	//	matchFunc := r.matchHandlerMap[context.Packet.Match]
-	//	if matchFunc!=nil {
-	//		matchFunc(context)
-	//	}
-	//}
+	if context.Packet()!=nil && !context.IsAborted(){
+		packetType := context.Packet().GetFixedHeader().PacketType
+		typePath := fmt.Sprintf("type:%d",packetType)
+		matchFunc := r.matchHandlerMap[typePath]
+		if matchFunc!=nil {
+			matchFunc(context)
+		}
+	}
 
 }
 
@@ -127,7 +129,7 @@ func (c *MContext) IsAborted() bool {
 	return c.index >= abortIndex
 }
 
-func (c *MContext) ReplyMsg(packet packets.Packet) error {
+func (c *MContext) ReplyPacket(packet packets.Packet) error {
 	data, err := c.Ctx.TGO.GetOpts().Pro.EncodePacket(packet)
 	if err != nil {
 		return err

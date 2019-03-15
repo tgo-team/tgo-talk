@@ -7,10 +7,16 @@ type MsgackPacket struct {
 	MessageID uint64
 }
 
-func NewMsgackPacket(fh FixedHeader) *MsgackPacket  {
+func NewMsgackPacketWithHeader(fh FixedHeader) *MsgackPacket  {
 	m := &MsgackPacket{}
 	m.FixedHeader = fh
 	return  m
+}
+func NewMsgackPacket(messageID uint64) *MsgackPacket {
+	m := &MsgackPacket{}
+	m.PacketType = Msgack
+	m.MessageID = messageID
+	return m
 }
 
 func (m *MsgackPacket) GetFixedHeader() FixedHeader  {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	_ "github.com/tgo-team/tgo-talk/log"
 	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
 	"github.com/tgo-team/tgo-talk/server/tcp"
@@ -29,9 +30,9 @@ func TestHandle(t *testing.T) {
 	test.Equal(t, connPacket.String(), packet.String())
 }
 
-func TestHandleAuth(t *testing.T) {
+func TestHandleConnPacket(t *testing.T) {
 	tg := startTGO(t)
-	tg.Use(HandleAuth)
+	tg.Use(HandleConnPacket)
 
 	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
@@ -39,10 +40,10 @@ func TestHandleAuth(t *testing.T) {
 
 }
 
-func TestHandleHeartbeat(t *testing.T) {
+func TestHandlePingPacket(t *testing.T) {
 	tg := startTGO(t)
-	tg.Use(HandleAuth)
-	tg.Use(HandleHeartbeat)
+	tg.Use(HandleConnPacket)
+	tg.Use(HandlePingPacket)
 
 	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
 	test.Nil(t, err)
@@ -60,9 +61,9 @@ func TestHandleHeartbeat(t *testing.T) {
 
 func TestHandleRevMsg(t *testing.T) {
 	tg := startTGO(t)
-	tg.Use(HandleAuth)
-	tg.Use(HandleHeartbeat)
-	tg.Use(HandleRevMsg)
+	tg.Use(HandleConnPacket)
+	tg.Use(HandlePingPacket)
+	tg.Match(fmt.Sprintf("type:%d",packets.Message),HandleMessagePacket)
 
 	tg.Storage.SaveChannel(tgo.NewChannel(2,1,nil))
 
@@ -72,7 +73,10 @@ func TestHandleRevMsg(t *testing.T) {
 
 	sendMsgPacket(t, conn, tg, packets.NewMessagePacket(100, 2, []byte("hello")))
 
-	time.Sleep(time.Millisecond * 50)
+	msgackPacket, ok := ReadPacket(t, conn, tg).(*packets.MsgackPacket)
+	test.Equal(t,true,ok)
+	test.Equal(t,packets.Msgack,msgackPacket.PacketType)
+	test.Equal(t,uint64(100),msgackPacket.MessageID)
 
 }
 

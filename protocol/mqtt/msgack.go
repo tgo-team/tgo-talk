@@ -7,7 +7,7 @@ import (
 )
 
 func (m *MQTTCodec) decodeMsgack(fh *packets.FixedHeader,reader io.Reader) ( *packets.MsgackPacket, error) {
-	msg := packets.NewMsgackPacket(*fh)
+	msg := packets.NewMsgackPacketWithHeader(*fh)
 	msg.MessageID = packets.DecodeUint64(reader)
 	return msg,nil
 }
