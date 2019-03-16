@@ -8,15 +8,23 @@ type ConnectPacket struct {
 	UsernameFlag     bool
 	PasswordFlag     bool
 	Username         string
-	Password         []byte
+	Password         string
 
 	Keepalive       uint16
 }
 
-func NewConnectPacket(fh FixedHeader) *ConnectPacket  {
+func NewConnectPacketWithHeader(fh FixedHeader) *ConnectPacket  {
 	c := &ConnectPacket{}
 	c.FixedHeader=fh
 	return  c
+}
+
+func NewConnectPacket(clientID uint64,password string) *ConnectPacket   {
+	c := &ConnectPacket{}
+	c.PacketType = Connect
+	c.ClientIdentifier = clientID
+	c.Password = password
+	return c
 }
 
 func (c *ConnectPacket) GetFixedHeader() FixedHeader  {

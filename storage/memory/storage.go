@@ -62,3 +62,7 @@ func (s *Storage) Bind(consumerID uint64, channelID uint64) error {
 func (s *Storage) GetClientIDs(channelID uint64) ([]uint64 ,error) {
 	return nil,nil
 }
+
+func (s *Storage) GetClient(clientID uint64) (*tgo.Client,error){
+	return nil,nil
+}

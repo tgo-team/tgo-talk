@@ -33,7 +33,7 @@ func TestMQTTCodec_Encode_ConnectPacket(t *testing.T)  {
 	connectPacket.UsernameFlag = true
 	connectPacket.PasswordFlag = true
 	connectPacket.Username = "testuser"
-	connectPacket.Password = []byte("testpass")
+	connectPacket.Password = "testpass"
 	codec := &MQTTCodec{}
 	_,err := codec.EncodePacket(connectPacket)
 	test.Nil(t,err)

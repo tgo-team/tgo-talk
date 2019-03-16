@@ -105,6 +105,9 @@ func (c *MContext) Conn() Conn {
 	return c.connContext.Conn
 }
 
+func (c *MContext) Storage() Storage {
+	return c.Ctx.TGO.Storage
+}
 
 
 func (c *MContext) Msg() *Msg {

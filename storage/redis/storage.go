@@ -115,6 +115,15 @@ func (s *Storage) GetClientIDs(channelID uint64) ([]uint64 ,error) {
 	return clientIDs,err
 }
 
+func (s *Storage) GetClient(clientID uint64) (*tgo.Client,error) {
+	client := &tgo.Client{}
+	err := s.client.Get(s.getClientsCacheKey(clientID)).Scan(client)
+	if err == redis.Nil {
+		return nil,nil
+	}
+	return client,err
+}
+
 func (s *Storage) getChannelClientCacheKey(channelID uint64) string  {
 	return fmt.Sprintf("%s:%d",s.channelClientPrefix, channelID)
 }

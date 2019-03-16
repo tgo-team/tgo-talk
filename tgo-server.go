@@ -8,7 +8,7 @@ import (
 	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
 	_ "github.com/tgo-team/tgo-talk/server/tcp"
 	_ "github.com/tgo-team/tgo-talk/server/udp"
-	_ "github.com/tgo-team/tgo-talk/storage/memory"
+	_ "github.com/tgo-team/tgo-talk/storage/redis"
 	"github.com/tgo-team/tgo-talk/tgo"
 	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"os"

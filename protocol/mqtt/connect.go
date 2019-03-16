@@ -7,7 +7,7 @@ import (
 )
 
 func (m *MQTTCodec) decodeConnect(fh *packets.FixedHeader, reader io.Reader) (*packets.ConnectPacket, error) {
-	c := packets.NewConnectPacket(*fh)
+	c := packets.NewConnectPacketWithHeader(*fh)
 	var _ = packets.DecodeString(reader)
 	var _ = packets.DecodeByte(reader)
 	options := packets.DecodeByte(reader)
@@ -24,7 +24,7 @@ func (m *MQTTCodec) decodeConnect(fh *packets.FixedHeader, reader io.Reader) (*p
 		c.Username = packets.DecodeString(reader)
 	}
 	if c.PasswordFlag {
-		c.Password = packets.DecodeBytes(reader)
+		c.Password = string(packets.DecodeBytes(reader))
 	}
 	return c, nil
 }
@@ -41,7 +41,7 @@ func (m *MQTTCodec) encodeConnect(packet packets.Packet) ([]byte, error) {
 		body.Write(packets.EncodeString(c.Username))
 	}
 	if c.PasswordFlag {
-		body.Write(packets.EncodeBytes(c.Password))
+		body.Write(packets.EncodeString(c.Password))
 	}
 	c.RemainingLength = body.Len()
 	return body.Bytes(), nil
