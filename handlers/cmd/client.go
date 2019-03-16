@@ -12,22 +12,36 @@ func Register(m *tgo.MContext) {
 
 	payloadReader := bytes.NewBuffer(cmdPacket.Payload)
 
-	cid := packets.DecodeUint64(payloadReader)
+	clientID := packets.DecodeUint64(payloadReader)
 	password := packets.DecodeString(payloadReader)
 
-	client, err := m.Storage().GetClient(cid)
+	client, err := m.Storage().GetClient(clientID)
 	if err != nil {
-		m.Error("查询客户端[%d]失败！ -> %v", cid, err)
+		m.Error("查询客户端[%d]失败！ -> %v", clientID, err)
 		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
 		return
 	}
 	if client != nil {
-		m.Error("客户端[%d]已存在！", cid)
+		m.Error("客户端[%d]已存在！", clientID)
 		replyCMDPacketError(m, CMDRegisterAck, RegisterClientExist)
 		return
 	}
-	err = m.Storage().AddClient(tgo.NewClient(cid, password))
+	err = m.Storage().AddClient(tgo.NewClient(clientID, password))
 	if err != nil {
+		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
+		return
+	}
+	var channelID = clientID
+	// 添加个人管道
+	err = m.Storage().AddChannel(tgo.NewChannel(channelID,tgo.ChannelTypePerson,m.Ctx))
+	if err!=nil {
+		m.Error("添加Channel失败！-> %v",err)
+		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
+		return
+	}
+
+	if err := m.Storage().Bind(clientID,channelID);err!=nil {
+		m.Error("绑定Channel失败！-> %v",err)
 		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
 		return
 	}

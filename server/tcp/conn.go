@@ -102,6 +102,10 @@ func (c *Conn) Exit() error {
 	return nil
 }
 
+func (c *Conn) String() string  {
+	return fmt.Sprintf("id: %d",c.id)
+}
+
 // --------- stateful conn -----------
 
 func (c *Conn) SetAuth(auth bool) {

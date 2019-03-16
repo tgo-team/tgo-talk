@@ -43,7 +43,7 @@ func (s *Storage) SaveMsg(msgContext *tgo.MsgContext) error {
 	return nil
 }
 
-func (s *Storage) SaveChannel(c *tgo.Channel) error {
+func (s *Storage) AddChannel(c *tgo.Channel) error {
 	s.channelMap[c.ChannelID] = c
 	return nil
 }

@@ -10,10 +10,16 @@ import (
 )
 
 // ------------ channel ----------------
+type ChannelType int
+
+const (
+	ChannelTypePerson ChannelType = iota // 个人管道
+	ChannelTypeGroup                     // 群组管道
+)
 
 type Channel struct {
 	ChannelID    uint64
-	ChannelType  int
+	ChannelType  ChannelType
 	MessageCount uint64
 	sync.RWMutex
 	Ctx *Context
@@ -25,12 +31,12 @@ type Channel struct {
 	connMap map[uint64]*Conn
 }
 
-func NewChannel(channelID uint64,channelType int,ctx *Context) *Channel {
+func NewChannel(channelID uint64, channelType ChannelType, ctx *Context) *Channel {
 	c := &Channel{
-		connMap: map[uint64]*Conn{},
-		ChannelID:channelID,
-		ChannelType:channelType,
-		Ctx: ctx,
+		connMap:     map[uint64]*Conn{},
+		ChannelID:   channelID,
+		ChannelType: channelType,
+		Ctx:         ctx,
 	}
 	//c.initPQ()
 	return c
@@ -59,9 +65,6 @@ func (c *Channel) PutMsg(msg *Msg) error {
 	atomic.AddUint64(&c.MessageCount, 1)
 	return nil
 }
-
-
-
 
 func (c *Channel) StartInFlightTimeout(msg *Msg, clientID int64, timeout time.Duration) error {
 	now := time.Now()

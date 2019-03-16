@@ -6,7 +6,12 @@ type PingreqPacket struct {
 	FixedHeader
 }
 
-func NewPingreqPacket(fh FixedHeader) *PingreqPacket  {
+func NewPingreqPacket() *PingreqPacket  {
+
+	return &PingreqPacket{FixedHeader:FixedHeader{PacketType:Pingreq}}
+}
+
+func NewPingreqPacketWithHeader(fh FixedHeader) *PingreqPacket  {
 	pr := &PingreqPacket{}
 	pr.FixedHeader = fh
 	return pr

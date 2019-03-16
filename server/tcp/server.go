@@ -140,7 +140,7 @@ func (s *Server) connExitLoop() {
 		select {
 		case conn := <-s.connExitChan:
 			if conn != nil {
-				s.Debug("客户端[%v]退出！", conn)
+				s.Debug("连接[%v]退出！", conn)
 				cn := conn.(*Conn)
 				s.ctx.TGO.ConnManager.RemoveConn(cn.id)
 			}

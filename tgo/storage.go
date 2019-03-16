@@ -33,7 +33,7 @@ type Storage interface {
 	SaveMsg(msgContext *MsgContext) error // 保存消息
 	StorageMsgChan() chan *MsgContext     // 读取消息
 	// ------ 管道操作 -----
-	SaveChannel(c *Channel) error                   // 保存管道
+	AddChannel(c *Channel) error                   // 保存管道
 	GetChannel(channelID uint64) (*Channel, error)  // 获取管道
 	Bind(clientID uint64, channelID uint64) error // 绑定消费者和通道的关系
 	GetClientIDs(channelID uint64) ([]uint64,error) // 获取所属管道所有的客户端

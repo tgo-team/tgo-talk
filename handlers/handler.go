@@ -40,6 +40,7 @@ func HandleConnPacket(m *tgo.MContext) {
 						m.Abort()
 						return
 					}
+					tgo.Online(connectPacket.ClientID,1) // 设置为上线
 					statefulConn.StartIOLoop()
 					m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
 					if err != nil {
@@ -100,7 +101,7 @@ func HandleMessagePacket(m *tgo.MContext) {
 		messagePacket := m.Packet().(*packets.MessagePacket)
 		channel, err := m.GetChannel(messagePacket.ChannelID)
 		if err != nil {
-			m.Error("获取Channel[%d]失败 -> %v", err)
+			m.Error("获取Channel[%d]失败 -> %v",messagePacket.ChannelID, err)
 			return
 		}
 		if channel!=nil {
@@ -114,6 +115,8 @@ func HandleMessagePacket(m *tgo.MContext) {
 				m.Error("回复消息[%d]的ACK失败！ -> %v",messagePacket.MessageID,err)
 				return
 			}
+		}else{
+			m.Warn("Channel[%d]不存在！",messagePacket.ChannelID)
 		}
 	}
 }
