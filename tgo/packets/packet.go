@@ -33,7 +33,6 @@ func (fh FixedHeader) String() string {
 }
 
 const (
-	None        PacketType = iota
 	Connect     PacketType = 1
 	Connack     PacketType = 2
 	Message     PacketType = 3
@@ -48,7 +47,7 @@ const (
 	Pingreq     PacketType = 12 // 心跳请求
 	Pingresp    PacketType = 13 // 心跳返回
 	Disconnect  PacketType = 14 // 断开连接
-	CMD         PacketType = 15 // 命名
+	CMD         PacketType = 15 // 命令
 )
 
 var PacketNames = map[uint8]string{

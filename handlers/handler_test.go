@@ -121,7 +121,7 @@ func TestHandleCMDPacket(t *testing.T) {
 	}
 	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
-	sendCMDPacket(t, conn, tg, packets.NewCMDPacket(100,1,[]byte("admin")))
+	sendCMDPacket(t, conn, tg, packets.NewCMDPacket(100,[]byte("admin")))
 	time.Sleep(time.Millisecond*50)
 }
 

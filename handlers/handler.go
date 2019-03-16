@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/tgo-team/tgo-talk/handlers/cmd"
 	"github.com/tgo-team/tgo-talk/tgo"
 	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"time"
@@ -69,7 +70,6 @@ func HandleConnPacket(m *tgo.MContext) {
 
 // HandlePingPacket 处理心跳包
 func HandlePingPacket(m *tgo.MContext) {
-	m.Debug("处理心跳请求...")
 	var err error
 	statefulConn, ok := m.Conn().(tgo.StatefulConn)
 	if ok {
@@ -115,5 +115,8 @@ func HandleMessagePacket(m *tgo.MContext) {
 
 // HandleCMDPacket 处理CMD包
 func HandleCMDPacket(m *tgo.MContext) {
-	println("----zzz")
+	cmdPacket := m.Packet().(*packets.CMDPacket)
+	if cmdPacket.CMD == 1 {
+		cmd.Register(m)
+	}
 }
