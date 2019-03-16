@@ -9,6 +9,7 @@ type Options struct {
 	LogPrefix            string
 	Verbose              bool
 	TCPAddress           string
+	UDPAddress           string
 	HTTPAddress          string
 	HTTPSAddress         string
 	MaxHeartbeatInterval time.Duration
@@ -34,6 +35,7 @@ func NewOptions() *Options {
 		LogPrefix:            "[tgo-server] ",
 		LogLevel:             DebugLevel,
 		TCPAddress:           "0.0.0.0:6666",
+		UDPAddress:           "0.0.0.0:5555",
 		HTTPAddress:          "0.0.0.0:6667",
 		HTTPSAddress:         "0.0.0.0:6443",
 		MaxHeartbeatInterval: 60 * time.Second,

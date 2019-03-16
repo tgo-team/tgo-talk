@@ -20,7 +20,7 @@ func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *p
 		payloadLength -=  8 // 减去messageID长度
 	}
 	if payloadLength < 0 {
-		return nil,fmt.Errorf("Error upacking publish, payload length < 0")
+		return nil,fmt.Errorf("Error upacking message, payload length < 0")
 	}
 	msg.Payload = make([]byte, payloadLength)
 	_, err := reader.Read(msg.Payload)

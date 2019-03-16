@@ -1,6 +1,9 @@
 package tgo
 
-import "time"
+import (
+	"net"
+	"time"
+)
 
 type Conn interface {
 	Read(b []byte) (n int, err error)
@@ -15,4 +18,9 @@ type StatefulConn interface {
 	SetID(id uint64)
 	GetID() uint64
 	SetDeadline(t time.Time) error
+}
+
+// StatelessConn 无状态连接
+type StatelessConn interface {
+	Addr() net.Addr
 }

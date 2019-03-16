@@ -105,10 +105,7 @@ func (c *MContext) Conn() Conn {
 	return c.connContext.Conn
 }
 
-func (c *MContext) Server() Server {
 
-	return c.connContext.Server
-}
 
 func (c *MContext) Msg() *Msg {
 	messagePacket, ok := c.connContext.Packet.(*packets.MessagePacket)

@@ -8,7 +8,12 @@ import (
 
 // HandleConnPacket 处理连接包
 func HandleConnPacket(m *tgo.MContext) {
-	if m.Packet().GetFixedHeader().PacketType == packets.Connect {
+
+	if m.PacketType()==packets.CMD { // CMD类型不做认证判断
+		return
+	}
+
+	if m.PacketType() == packets.Connect {
 		m.Debug("开始认证！")
 		connectPacket := m.Packet().(*packets.ConnectPacket)
 		if connectPacket.ClientIdentifier == 1 && string(connectPacket.Password) == "123456" {
@@ -64,6 +69,7 @@ func HandleConnPacket(m *tgo.MContext) {
 
 // HandlePingPacket 处理心跳包
 func HandlePingPacket(m *tgo.MContext) {
+	m.Debug("处理心跳请求...")
 	var err error
 	statefulConn, ok := m.Conn().(tgo.StatefulConn)
 	if ok {
@@ -104,4 +110,10 @@ func HandleMessagePacket(m *tgo.MContext) {
 			}
 		}
 	}
+}
+
+
+// HandleCMDPacket 处理CMD包
+func HandleCMDPacket(m *tgo.MContext) {
+	println("----zzz")
 }

@@ -34,7 +34,15 @@ func init()  {
 
 // 登记server
 func RegistryServer(newFunc newServerFunc)  {
-	registryMap[fmt.Sprintf("%s",newServerPrefix)] = newFunc
+	serverFuncObj := registryMap[fmt.Sprintf("%s",newServerPrefix)]
+	var serverFuncs []newServerFunc
+	if serverFuncObj==nil {
+		serverFuncs = []newServerFunc{}
+	}else{
+		serverFuncs = serverFuncObj.([]newServerFunc)
+	}
+	serverFuncs = append(serverFuncs,newFunc)
+	registryMap[fmt.Sprintf("%s",newServerPrefix)] = serverFuncs
 }
 
 
@@ -60,11 +68,16 @@ func NewStorage(context *Context) Storage {
 	return nil
 }
 
-func NewServer(context *Context) Server  {
+func GetServers(context *Context) []Server  {
 	key := fmt.Sprintf("%s",newServerPrefix)
 	serverFuncObj := registryMap[key]
+	servers := make([]Server,0)
 	if serverFuncObj!=nil {
-		return  serverFuncObj.(newServerFunc)(context)
+		serverFuncs := serverFuncObj.([]newServerFunc)
+		for _,serverFunc :=range serverFuncs {
+			servers = append(servers,serverFunc(context))
+		}
+		return  servers
 	}
 	return nil
 }

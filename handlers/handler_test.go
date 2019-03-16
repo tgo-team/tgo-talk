@@ -20,8 +20,14 @@ func TestHandle(t *testing.T) {
 	tg.Use(func(context *tgo.MContext) {
 		packetChan <- context.Packet()
 	})
-
-	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
+	var tcpServer *tcp.Server
+	for _,server :=range tg.Servers {
+		s,ok := server.(*tcp.Server)
+		if ok {
+			tcpServer  = s
+		}
+	}
+	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
 	connPacket := &packets.ConnectPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Connect}, ClientIdentifier: 1, PasswordFlag: true, Password: []byte("123456")}
 	WritePacket(t, conn, connPacket, tg)
@@ -34,7 +40,15 @@ func TestHandleConnPacket(t *testing.T) {
 	tg := startTGO(t)
 	tg.Use(HandleConnPacket)
 
-	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
+	var tcpServer *tcp.Server
+	for _,server :=range tg.Servers {
+		s,ok := server.(*tcp.Server)
+		if ok {
+			tcpServer  = s
+		}
+	}
+
+	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
 	sendAuthPacket(t, conn, tg)
 
@@ -44,8 +58,15 @@ func TestHandlePingPacket(t *testing.T) {
 	tg := startTGO(t)
 	tg.Use(HandleConnPacket)
 	tg.Use(HandlePingPacket)
+	var tcpServer *tcp.Server
+	for _,server :=range tg.Servers {
+		s,ok := server.(*tcp.Server)
+		if ok {
+			tcpServer  = s
+		}
+	}
 
-	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
+	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
 
 	sendAuthPacket(t, conn, tg)
@@ -59,15 +80,21 @@ func TestHandlePingPacket(t *testing.T) {
 	test.Equal(t, packets.Pingresp, pongPacket.GetFixedHeader().PacketType)
 }
 
-func TestHandleRevMsg(t *testing.T) {
+func TestHandleMessagePacket(t *testing.T) {
 	tg := startTGO(t)
 	tg.Use(HandleConnPacket)
 	tg.Use(HandlePingPacket)
 	tg.Match(fmt.Sprintf("type:%d",packets.Message),HandleMessagePacket)
 
 	tg.Storage.SaveChannel(tgo.NewChannel(2,1,nil))
-
-	conn, err := MustConnectServer(tg.Server.(*tcp.Server).RealTCPAddr())
+	var tcpServer *tcp.Server
+	for _,server :=range tg.Servers {
+		s,ok := server.(*tcp.Server)
+		if ok {
+			tcpServer  = s
+		}
+	}
+	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
 	sendAuthPacket(t, conn, tg)
 
@@ -80,8 +107,30 @@ func TestHandleRevMsg(t *testing.T) {
 
 }
 
+func TestHandleCMDPacket(t *testing.T) {
+	tg := startTGO(t)
+	tg.Use(HandleConnPacket)
+	tg.Use(HandlePingPacket)
+	tg.Match(fmt.Sprintf("type:%d",packets.CMD),HandleCMDPacket)
+	var tcpServer *tcp.Server
+	for _,server :=range tg.Servers {
+		s,ok := server.(*tcp.Server)
+		if ok {
+			tcpServer  = s
+		}
+	}
+	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
+	test.Nil(t, err)
+	sendCMDPacket(t, conn, tg, packets.NewCMDPacket(100,1,[]byte("admin")))
+	time.Sleep(time.Millisecond*50)
+}
+
 func sendMsgPacket(t *testing.T, conn net.Conn, tg *tgo.TGO, msgPacket *packets.MessagePacket) {
 	WritePacket(t, conn, msgPacket, tg)
+}
+
+func sendCMDPacket(t *testing.T, conn net.Conn, tg *tgo.TGO, cmdPacket *packets.CMDPacket) {
+	WritePacket(t, conn, cmdPacket, tg)
 }
 
 func sendAuthPacket(t *testing.T, conn net.Conn, tg *tgo.TGO) {

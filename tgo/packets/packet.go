@@ -29,7 +29,7 @@ type FixedHeader struct {
 }
 
 func (fh FixedHeader) String() string {
-	return fmt.Sprintf("%s: From: %d dup: %t qos: %d retain: %t rLength: %d", PacketNames[uint8(fh.PacketType)],fh.From, fh.Dup, fh.Qos, fh.Retain, fh.RemainingLength)
+	return fmt.Sprintf("%s: From: %d dup: %t qos: %d retain: %t rLength: %d", PacketNames[uint8(fh.PacketType)], fh.From, fh.Dup, fh.Qos, fh.Retain, fh.RemainingLength)
 }
 
 const (
@@ -45,9 +45,10 @@ const (
 	Suback      PacketType = 9
 	Unsubscribe PacketType = 10
 	Unsuback    PacketType = 11
-	Pingreq     PacketType = 12
-	Pingresp    PacketType = 13
-	Disconnect  PacketType = 14
+	Pingreq     PacketType = 12 // 心跳请求
+	Pingresp    PacketType = 13 // 心跳返回
+	Disconnect  PacketType = 14 // 断开连接
+	CMD         PacketType = 15 // 命名
 )
 
 var PacketNames = map[uint8]string{
@@ -65,10 +66,8 @@ var PacketNames = map[uint8]string{
 	12: "PINGREQ",
 	13: "PINGRESP",
 	14: "DISCONNECT",
+	15: "CMD",
 }
-
-
-
 
 func BoolToByte(b bool) byte {
 	switch b {
@@ -130,5 +129,3 @@ func EncodeBytes(field []byte) []byte {
 	binary.BigEndian.PutUint16(fieldLength, uint16(len(field)))
 	return append(fieldLength, field...)
 }
-
-

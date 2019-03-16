@@ -7,13 +7,11 @@ import (
 type ConnContext struct {
 	Packet packets.Packet
 	Conn Conn
-	Server Server
 }
 
-func NewConnContext(packet packets.Packet,conn Conn,server Server) *ConnContext {
+func NewConnContext(packet packets.Packet,conn Conn) *ConnContext {
 	return &ConnContext{
 		Packet: packet,
 		Conn:conn,
-		Server: server,
 	}
 }

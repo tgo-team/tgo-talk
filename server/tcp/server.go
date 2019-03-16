@@ -132,7 +132,7 @@ func (s *Server) generateConn(conn net.Conn) {
 		s.exitChan <- 1
 		return
 	}
-	s.connContextChan <- tgo.NewConnContext(packet,cn,s)
+	s.connContextChan <- tgo.NewConnContext(packet,cn)
 }
 
 func (s *Server) connExitLoop() {

@@ -5,7 +5,7 @@ import (
 )
 
 type TGO struct {
-	Server Server
+	Servers []Server
 	opts   atomic.Value // options
 	*Route
 	exitChan        chan int
@@ -39,8 +39,8 @@ func New(opts *Options) *TGO {
 	}
 
 	// server
-	tg.Server = NewServer(ctx)
-	if tg.Server == nil {
+	tg.Servers = GetServers(ctx)
+	if tg.Servers == nil {
 		opts.Log.Fatal("请先配置Server！")
 	}
 
@@ -58,14 +58,20 @@ func New(opts *Options) *TGO {
 }
 
 func (t *TGO) Start() error {
-	return t.Server.Start()
+	for _,server :=range t.Servers {
+		err := server.Start()
+		if err!=nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *TGO) Stop() error {
 	close(t.exitChan)
-	if t.Server != nil {
-		err := t.Server.Stop()
-		if err != nil {
+	for _,server :=range t.Servers {
+		err := server.Stop()
+		if err!=nil {
 			return err
 		}
 	}

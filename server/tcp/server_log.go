@@ -23,5 +23,5 @@ func (s *Server) Fatal(format string, a ...interface{}) {
 }
 
 func (s *Server) getLogPrefix() string {
-	return "Server"
+	return "TCPServer"
 }

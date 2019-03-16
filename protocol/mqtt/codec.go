@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/tgo-team/tgo-talk/tgo"
 	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"io"
@@ -49,7 +50,10 @@ func (m *MQTTCodec) DecodePacket(reader tgo.Conn) (packets.Packet, error) {
 	if fh.PacketType == packets.Msgack {
 		return m.decodeMsgack(fh, reader)
 	}
-	return nil, nil
+	if fh.PacketType == packets.CMD {
+		return m.decodeCMD(fh, reader)
+	}
+	return nil, fmt.Errorf("不支持的包类型[%d]",fh.PacketType)
 }
 
 func (m *MQTTCodec) EncodePacket(packet packets.Packet) ([]byte, error) {
@@ -84,6 +88,13 @@ func (m *MQTTCodec) EncodePacket(packet packets.Packet) ([]byte, error) {
 			return nil, err
 		}
 	}
+	if packetType == packets.CMD {
+		remainingBytes, err = m.encodeCMD(packet)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	header, err := m.encodeFixedHeader(packet)
 	if err != nil {
 		return nil, err
@@ -91,6 +102,11 @@ func (m *MQTTCodec) EncodePacket(packet packets.Packet) ([]byte, error) {
 	if packetType == packets.Pingreq || packetType == packets.Pingresp {
 		return header, nil
 	}
+
+	if remainingBytes ==nil || len(remainingBytes)<=0 {
+		return nil,fmt.Errorf("不支持的包类型[%d]",packetType)
+	}
+
 	packetBuffer.Write(header)
 	packetBuffer.Write(remainingBytes)
 
