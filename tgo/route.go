@@ -85,33 +85,33 @@ func allocateContext() *MContext {
 	return &MContext{index: -1, handlers: nil, connContext: nil, RWMutex: sync.RWMutex{}}
 }
 
-func (c *MContext) Next() {
-	c.index++
-	for ; c.index < int8(len(c.handlers)); c.index++ {
-		c.handlers[c.index](c)
+func (m *MContext) Next() {
+	m.index++
+	for ; m.index < int8(len(m.handlers)); m.index++ {
+		m.handlers[m.index](m)
 	}
 }
 
-func (c *MContext) Packet() packets.Packet {
-	return c.connContext.Packet
+func (m *MContext) Packet() packets.Packet {
+	return m.connContext.Packet
 }
 
-func (c *MContext) PacketType() packets.PacketType {
+func (m *MContext) PacketType() packets.PacketType {
 
-	return c.Packet().GetFixedHeader().PacketType
+	return m.Packet().GetFixedHeader().PacketType
 }
 
-func (c *MContext) Conn() Conn {
-	return c.connContext.Conn
+func (m *MContext) Conn() Conn {
+	return m.connContext.Conn
 }
 
-func (c *MContext) Storage() Storage {
-	return c.Ctx.TGO.Storage
+func (m *MContext) Storage() Storage {
+	return m.Ctx.TGO.Storage
 }
 
 
-func (c *MContext) Msg() *Msg {
-	messagePacket, ok := c.connContext.Packet.(*packets.MessagePacket)
+func (m *MContext) Msg() *Msg {
+	messagePacket, ok := m.connContext.Packet.(*packets.MessagePacket)
 	if ok {
 		msg := NewMsg(messagePacket.MessageID,messagePacket.From,messagePacket.Payload)
 		msg.MessageID = messagePacket.MessageID
@@ -121,85 +121,86 @@ func (c *MContext) Msg() *Msg {
 	return nil
 }
 
-func (c *MContext) Abort() {
-	c.index = abortIndex
+func (m *MContext) Abort() {
+	m.index = abortIndex
 }
 
-func (c *MContext) IsAborted() bool {
-	return c.index >= abortIndex
+func (m *MContext) IsAborted() bool {
+	return m.index >= abortIndex
 }
 
-func (c *MContext) ReplyPacket(packet packets.Packet) error {
-	data, err := c.Ctx.TGO.GetOpts().Pro.EncodePacket(packet)
+func (m *MContext) ReplyPacket(packet packets.Packet)  {
+	data, err := m.Ctx.TGO.GetOpts().Pro.EncodePacket(packet)
 	if err != nil {
-		return err
+		m.Error("编码出错！-> %v",err)
+		return
 	}
-	_, err = c.Conn().Write(data)
+	_, err = m.Conn().Write(data)
 	if err != nil {
-		return err
+		m.Error("写入数据出错！-> %v",err)
 	}
-	return nil
+	return
 }
 
-func (c *MContext) GetChannel(channelID uint64) (*Channel,error) {
+func (m *MContext) GetChannel(channelID uint64) (*Channel,error) {
 
-	return c.Ctx.TGO.GetChannel(channelID)
+	return m.Ctx.TGO.GetChannel(channelID)
 }
 
-func (c *MContext) reset() {
-	c.Lock()
-	defer c.Unlock()
-	c.index = -1
-	c.connContext = nil
-	c.handlers = nil
+func (m *MContext) reset() {
+	m.Lock()
+	defer m.Unlock()
+	m.index = -1
+	m.connContext = nil
+	m.handlers = nil
 }
 
-func (c *MContext) current() HandlerFunc {
-	if c.index < int8(len(c.handlers)) && c.index != -1 {
-		return c.handlers[c.index]
+func (m *MContext) current() HandlerFunc {
+	if m.index < int8(len(m.handlers)) && m.index != -1 {
+		return m.handlers[m.index]
 	}
 	return nil
 }
 
 // ---------- log --------------
-func (c *MContext) Info(f string, args ...interface{}) {
-	funcName := c.currentHandleName()
-	c.Ctx.TGO.GetOpts().Log.Info(fmt.Sprintf("%s[%s] -> ", c.getLogPrefix(), funcName)+f, args...)
+func (m *MContext) Info(f string, args ...interface{}) {
+	funcName := m.currentHandleName()
+	m.Ctx.TGO.GetOpts().Log.Info(fmt.Sprintf("%s[%s] -> ", m.getLogPrefix(), funcName)+f, args...)
 	return
 }
 
-func (c *MContext) Error(f string, args ...interface{}) {
-	funcName := c.currentHandleName()
-	c.Ctx.TGO.GetOpts().Log.Error(fmt.Sprintf("%s[%s] -> ", c.getLogPrefix(), funcName)+f, args...)
+func (m *MContext) Error(f string, args ...interface{}) {
+	funcName := m.currentHandleName()
+	m.Ctx.TGO.GetOpts().Log.Error(fmt.Sprintf("%s[%s] -> ", m.getLogPrefix(), funcName)+f, args...)
 	return
 }
 
-func (c *MContext) Debug(f string, args ...interface{}) {
-	funcName := c.currentHandleName()
-	c.Ctx.TGO.GetOpts().Log.Debug(fmt.Sprintf("%s[%s] -> ", c.getLogPrefix(), funcName)+f, args...)
+func (m *MContext) Debug(f string, args ...interface{}) {
+	funcName := m.currentHandleName()
+	m.Ctx.TGO.GetOpts().Log.Debug(fmt.Sprintf("%s[%s] -> ", m.getLogPrefix(), funcName)+f, args...)
 	return
 }
 
-func (c *MContext) Warn(f string, args ...interface{}) {
-	funcName := c.currentHandleName()
-	c.Ctx.TGO.GetOpts().Log.Warn(fmt.Sprintf("%s[%s] -> ", c.getLogPrefix(), funcName)+f, args...)
+func (m *MContext) Warn(f string, args ...interface{}) {
+	funcName := m.currentHandleName()
+	m.Ctx.TGO.GetOpts().Log.Warn(fmt.Sprintf("%s[%s] -> ", m.getLogPrefix(), funcName)+f, args...)
 	return
 }
 
-func (c *MContext) Fatal(f string, args ...interface{}) {
-	funcName := c.currentHandleName()
-	c.Ctx.TGO.GetOpts().Log.Fatal(fmt.Sprintf("%s[%s] -> ", c.getLogPrefix(), funcName)+f, args...)
+func (m *MContext) Fatal(f string, args ...interface{}) {
+	funcName := m.currentHandleName()
+	m.Ctx.TGO.GetOpts().Log.Fatal(fmt.Sprintf("%s[%s] -> ", m.getLogPrefix(), funcName)+f, args...)
 	return
 }
 
-func (c *MContext) getLogPrefix() string {
+func (m *MContext) getLogPrefix() string {
 	return "【Route】"
 }
 
-func (c *MContext) currentHandleName() string {
+func (m *MContext) currentHandleName() string {
 	funcName := ""
-	if c.current() != nil {
-		funcName = runtime.FuncForPC(reflect.ValueOf(c.current()).Pointer()).Name()
+	if m.current() != nil {
+		funcName = runtime.FuncForPC(reflect.ValueOf(m.current()).Pointer()).Name()
 	}
 
 	return funcName

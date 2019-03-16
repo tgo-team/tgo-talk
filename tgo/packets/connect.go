@@ -4,7 +4,7 @@ import "fmt"
 
 type ConnectPacket struct {
 	FixedHeader
-	ClientIdentifier uint64
+	ClientID uint64
 	UsernameFlag     bool
 	PasswordFlag     bool
 	Username         string
@@ -22,7 +22,7 @@ func NewConnectPacketWithHeader(fh FixedHeader) *ConnectPacket  {
 func NewConnectPacket(clientID uint64,password string) *ConnectPacket   {
 	c := &ConnectPacket{}
 	c.PacketType = Connect
-	c.ClientIdentifier = clientID
+	c.ClientID = clientID
 	c.Password = password
 	return c
 }
@@ -35,6 +35,6 @@ func (c *ConnectPacket) GetFixedHeader() FixedHeader  {
 func (c *ConnectPacket) String() string {
 	str := fmt.Sprintf("%s", c.FixedHeader)
 	str += " "
-	str += fmt.Sprintf("Usernameflag: %t Passwordflag: %t keepalive: %d clientId: %d Username: %s Password: %s", c.UsernameFlag, c.PasswordFlag, c.Keepalive, c.ClientIdentifier, c.Username, c.Password)
+	str += fmt.Sprintf("Usernameflag: %t Passwordflag: %t keepalive: %d clientId: %d Username: %s Password: %s", c.UsernameFlag, c.PasswordFlag, c.Keepalive, c.ClientID, c.Username, c.Password)
 	return str
 }

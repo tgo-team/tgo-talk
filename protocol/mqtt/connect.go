@@ -19,7 +19,7 @@ func (m *MQTTCodec) decodeConnect(fh *packets.FixedHeader, reader io.Reader) (*p
 	c.PasswordFlag = 1&(options>>6) > 0
 	c.UsernameFlag = 1&(options>>7) > 0
 	c.Keepalive = packets.DecodeUint16(reader)
-	c.ClientIdentifier = packets.DecodeUint64(reader)
+	c.ClientID = packets.DecodeUint64(reader)
 	if c.UsernameFlag {
 		c.Username = packets.DecodeString(reader)
 	}
@@ -36,7 +36,7 @@ func (m *MQTTCodec) encodeConnect(packet packets.Packet) ([]byte, error) {
 	body.WriteByte(0x04)
 	body.WriteByte(packets.BoolToByte(false)<<1 | packets.BoolToByte(false)<<2 | 0<<3 | packets.BoolToByte(false)<<5 | packets.BoolToByte(c.PasswordFlag)<<6 | packets.BoolToByte(c.UsernameFlag)<<7)
 	body.Write(packets.EncodeUint16(c.Keepalive))
-	body.Write(packets.EncodeUint64(c.ClientIdentifier))
+	body.Write(packets.EncodeUint64(c.ClientID))
 	if c.UsernameFlag {
 		body.Write(packets.EncodeString(c.Username))
 	}

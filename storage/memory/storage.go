@@ -14,6 +14,7 @@ type Storage struct {
 	storageMsgChan chan *tgo.MsgContext
 	channelMsgMap      map[uint64][]*tgo.Msg
 	channelMap map[uint64] *tgo.Channel
+	clientMap map[uint64] *tgo.Client
 	ctx *tgo.Context
 }
 
@@ -22,6 +23,7 @@ func NewStorage(ctx *tgo.Context) *Storage {
 		storageMsgChan: make(chan *tgo.MsgContext, 0),
 		channelMsgMap:      make(map[uint64][]*tgo.Msg),
 		channelMap: make(map[uint64]*tgo.Channel),
+		clientMap: make(map[uint64]*tgo.Client),
 		ctx: ctx,
 	}
 }
@@ -52,6 +54,7 @@ func (s *Storage) GetChannel(channelID uint64) (*tgo.Channel,error) {
 }
 
 func (s *Storage) AddClient( c *tgo.Client) error {
+	s.clientMap[c.ClientID] = c
 	return nil
 }
 
@@ -64,5 +67,6 @@ func (s *Storage) GetClientIDs(channelID uint64) ([]uint64 ,error) {
 }
 
 func (s *Storage) GetClient(clientID uint64) (*tgo.Client,error){
-	return nil,nil
+
+	return s.clientMap[clientID],nil
 }

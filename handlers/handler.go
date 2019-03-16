@@ -17,14 +17,23 @@ func HandleConnPacket(m *tgo.MContext) {
 	if m.PacketType() == packets.Connect {
 		m.Debug("开始认证！")
 		connectPacket := m.Packet().(*packets.ConnectPacket)
-		if connectPacket.ClientIdentifier == 1 && string(connectPacket.Password) == "123456" {
+		client,err := m.Storage().GetClient(connectPacket.ClientID)
+		if err!=nil {
+			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeError))
+			return
+		}
+		if client ==nil {
+			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
+			return
+		}
+		if connectPacket.ClientID == client.ClientID && connectPacket.Password == client.Password {
 			m.Debug("认证成功！")
 			conn := m.Conn()
 			if conn != nil {
 				statefulConn, ok := conn.(tgo.StatefulConn)
 				if ok {
 					statefulConn.SetAuth(true)
-					statefulConn.SetID(connectPacket.ClientIdentifier)
+					statefulConn.SetID(connectPacket.ClientID)
 					err := statefulConn.SetDeadline(time.Now().Add(m.Ctx.TGO.GetOpts().MaxHeartbeatInterval * 2))
 					if err != nil {
 						m.Error("SetDeadline失败 -> %v", err)
@@ -32,17 +41,17 @@ func HandleConnPacket(m *tgo.MContext) {
 						return
 					}
 					statefulConn.StartIOLoop()
-					err = m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
+					m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
 					if err != nil {
 						m.Error("发送认证ACK失败 -> %v", err)
 						m.Abort()
 						return
 					}
-					m.Ctx.TGO.ConnManager.AddConn(connectPacket.ClientIdentifier, conn)
+					m.Ctx.TGO.ConnManager.AddConn(connectPacket.ClientID, conn)
 				}
 			}
 		} else {
-			err := m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
+			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
 			if err != nil {
 				m.Error("发送认证ACK失败 -> %v", err)
 				m.Abort()
@@ -55,10 +64,7 @@ func HandleConnPacket(m *tgo.MContext) {
 		statefulConn, ok := conn.(tgo.StatefulConn)
 		if ok {
 			if !statefulConn.IsAuth() {
-				err := m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeUnAuth))
-				if err != nil {
-					m.Error("发送认证ACK失败 -> %v", err)
-				}
+				m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeUnAuth))
 				m.Abort()
 				return
 			}
@@ -81,7 +87,7 @@ func HandlePingPacket(m *tgo.MContext) {
 		}
 	}
 	if m.PacketType() == packets.Pingreq {
-		err = m.ReplyPacket(packets.NewPingrespPacket())
+		 m.ReplyPacket(packets.NewPingrespPacket())
 		if err != nil {
 			m.Error("回复心跳包失败 -> %v", err)
 			return
@@ -103,7 +109,7 @@ func HandleMessagePacket(m *tgo.MContext) {
 				m.Error("将消息放入Channel[%d]失败！ -> %v",messagePacket.ChannelID,err)
 				return
 			}
-			err = m.ReplyPacket(packets.NewMsgackPacket(messagePacket.MessageID))
+			 m.ReplyPacket(packets.NewMsgackPacket(messagePacket.MessageID))
 			if err!=nil {
 				m.Error("回复消息[%d]的ACK失败！ -> %v",messagePacket.MessageID,err)
 				return

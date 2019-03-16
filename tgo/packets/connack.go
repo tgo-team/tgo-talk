@@ -11,6 +11,7 @@ const (
 	ConnReturnCodeUnavailableServices // 0x03连接已拒绝，服务端不可用
 	ConnReturnCodePasswordOrUnameError // 0x04连接已拒绝，无效的用户名或密码
 	ConnReturnCodeUnAuth // 0x05客户端未被授权连接到此服务器
+	ConnReturnCodeError // 服务器内部错误
 )
 
 type ConnackPacket struct {
