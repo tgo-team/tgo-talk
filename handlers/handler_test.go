@@ -179,7 +179,7 @@ func startTGO(t *testing.T) *tgo.TGO {
 	tg := tgo.New(opts)
 	err := tg.Start()
 	tg.Storage.AddClient(tgo.NewClient(testClientID, testPassword))
-	tg.Storage.SaveChannel(tgo.NewChannel(testChannelID,1,&tgo.Context{TGO:tg}))
+	tg.Storage.AddChannel(tgo.NewChannel(testChannelID,1,&tgo.Context{TGO:tg}))
 	test.Nil(t, err)
 	return tg
 }
