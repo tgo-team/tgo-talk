@@ -3,17 +3,21 @@ package mqtt
 import (
 	"bytes"
 	"fmt"
+	"github.com/tgo-team/tgo-talk/tgo"
 	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"io"
 )
 
-// | Option(1 byte ) |
-//  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
-//  | gid flag |
 func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *packets.MessagePacket, error) {
 	msg := packets.NewMessagePacketHeader(*fh)
 	var payloadLength = msg.RemainingLength
 	msg.From = packets.DecodeUint64(reader)
+	if msg.From == 0 {
+		statefulConn,ok := reader.(tgo.StatefulConn)
+		if ok {
+			msg.From = statefulConn.GetID()
+		}
+	}
 	msg.ChannelID = packets.DecodeUint64(reader)
 	payloadLength -= 8 + 8 // 减去 ChannelID的长度 + From的长度
 	if msg.Qos > 0 {

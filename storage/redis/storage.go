@@ -37,7 +37,7 @@ func (s *Storage) StorageMsgChan() chan *tgo.MsgContext {
 	return s.storageMsgChan
 }
 
-func (s *Storage) SaveMsg(msgContext *tgo.MsgContext) error {
+func (s *Storage) AddMsg(msgContext *tgo.MsgContext) error {
 	msg := msgContext.Msg()
 	sMsgID := fmt.Sprintf("%d", msg.MessageID)
 	sChannelID := fmt.Sprintf("%d", msgContext.ChannelID())

@@ -30,7 +30,7 @@ func (c *Client) UnmarshalBinary(data []byte) error {
 
 type Storage interface {
 	// ------ 消息操作 -----
-	SaveMsg(msgContext *MsgContext) error // 保存消息
+	AddMsg(msgContext *MsgContext) error // 保存消息
 	StorageMsgChan() chan *MsgContext     // 读取消息
 	// ------ 管道操作 -----
 	AddChannel(c *Channel) error                   // 保存管道

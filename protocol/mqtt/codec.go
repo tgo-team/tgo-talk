@@ -27,11 +27,6 @@ func (m *MQTTCodec) DecodePacket(reader tgo.Conn) (packets.Packet, error) {
 		return nil, err
 	}
 
-	statefulConn,ok := reader.(tgo.StatefulConn)
-	if ok {
-		fh.From = statefulConn.GetID()
-	}
-
 	if fh.PacketType == packets.Connect {
 		return m.decodeConnect(fh, reader)
 	}
@@ -45,7 +40,8 @@ func (m *MQTTCodec) DecodePacket(reader tgo.Conn) (packets.Packet, error) {
 		return &packets.PingrespPacket{FixedHeader: *fh}, nil
 	}
 	if fh.PacketType == packets.Message {
-		return m.decodeMessage(fh, reader)
+		msgPacket,err := m.decodeMessage(fh, reader)
+		return msgPacket,err
 	}
 	if fh.PacketType == packets.Msgack {
 		return m.decodeMsgack(fh, reader)

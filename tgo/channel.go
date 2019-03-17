@@ -2,6 +2,7 @@ package tgo
 
 import (
 	"fmt"
+	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"github.com/tgo-team/tgo-talk/tgo/pqueue"
 	"math"
 	"sync"
@@ -57,13 +58,51 @@ func (c *Channel) PutMsg(msg *Msg) error {
 	case c.Ctx.TGO.memoryMsgChan <- msgContext:
 	default:
 		c.Warn("内存消息已满，进入持久化存储！")
-		err := c.Ctx.TGO.Storage.SaveMsg(msgContext)
+		err := c.Ctx.TGO.Storage.AddMsg(msgContext)
 		if err != nil {
 			return err
 		}
 	}
 	atomic.AddUint64(&c.MessageCount, 1)
 	return nil
+}
+
+// DeliveryMsg 投递消息
+func (c *Channel) DeliveryMsg(msgCtx *MsgContext)  {
+	c.Debug("开始投递消息[%d]！",msgCtx.Msg().MessageID)
+	clientIDs,err := c.Ctx.TGO.Storage.GetClientIDs(msgCtx.channelID)
+	if err!=nil {
+		c.Error("获取管道[%d]的客户端ID集合失败！ -> %v",msgCtx.channelID,err)
+		return
+	}
+	if clientIDs==nil || len(clientIDs)<=0 {
+		c.Warn("Channel[%d]里没有客户端！",msgCtx.channelID)
+		return
+	}
+	for _,clientID :=range clientIDs {
+		if clientID == msgCtx.Msg().From { // 不发送给自己
+			continue
+		}
+		online := IsOnline(clientID)
+		if online {
+			conn := c.Ctx.TGO.ConnManager.GetConn(clientID)
+			if conn!=nil {
+				msgPacket := packets.NewMessagePacket(msgCtx.msg.MessageID,msgCtx.channelID,msgCtx.msg.Payload)
+				msgPacket.From = msgCtx.Msg().From
+				msgPacketData,err := c.Ctx.TGO.GetOpts().Pro.EncodePacket(msgPacket)
+				if err!=nil {
+					c.Error("编码消息[%d]数据失败！-> %v",msgCtx.msg.MessageID,err)
+					continue
+				}
+				_,err = conn.Write(msgPacketData)
+				if err!=nil {
+					c.Error("写入消息[%d]数据失败！-> %v",msgCtx.msg.MessageID,err)
+					continue
+				}
+			}
+		}
+	}
+
 }
 
 func (c *Channel) StartInFlightTimeout(msg *Msg, clientID int64, timeout time.Duration) error {

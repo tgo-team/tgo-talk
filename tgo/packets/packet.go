@@ -53,7 +53,7 @@ const (
 var PacketNames = map[uint8]string{
 	1:  "CONNECT",
 	2:  "CONNACK",
-	3:  "PUBLISH",
+	3:  "MESSAGE",
 	4:  "PUBACK",
 	5:  "PUBREC",
 	6:  "PUBREL",

@@ -32,7 +32,7 @@ func (s *Storage) StorageMsgChan() chan *tgo.MsgContext {
 	return s.storageMsgChan
 }
 
-func (s *Storage) SaveMsg(msgContext *tgo.MsgContext) error {
+func (s *Storage) AddMsg(msgContext *tgo.MsgContext) error {
 	msgs := s.channelMsgMap[msgContext.ChannelID()]
 	if msgs==nil  {
 		msgs = make([]*tgo.Msg,0)

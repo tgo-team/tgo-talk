@@ -1,7 +1,6 @@
 package tgo
 
 import (
-	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"sync/atomic"
 )
 
@@ -100,17 +99,41 @@ func (t *TGO) msgLoop() {
 				t.Warn("Receive the message is nil")
 			}
 		case msgContext := <-t.Storage.StorageMsgChan():
-			if msgContext != nil {
-				t.GetOpts().Log.Info("Storage-ReceiveMsgChan--%v", msgContext)
+			if msgContext!=nil {
 				channel, err := t.GetChannel(msgContext.ChannelID())
 				if err != nil {
-
+					t.Error("获取管道[%d]失败！-> %v",msgContext.ChannelID(),err)
+					continue
 				}
-				println(channel)
-				//t.StartInFlightTimeout(msg, 0)
+				if channel==nil {
+					t.Error("管道[%d]不存在！",msgContext.ChannelID())
+					continue
+				}
+				t.waitGroup.Add(1)
+				go func(msgContext *MsgContext) {
+					channel.DeliveryMsg(msgContext)
+					t.waitGroup.Done()
+				}(msgContext)
 			}
 		case msgContext := <-t.memoryMsgChan:
-			t.startPushMsg(msgContext)
+			if msgContext!=nil {
+				channel, err := t.GetChannel(msgContext.ChannelID())
+				if err != nil {
+					t.Error("获取管道[%d]失败！-> %v",msgContext.ChannelID(),err)
+					continue
+				}
+				if channel==nil {
+					t.Error("管道[%d]不存在！",msgContext.ChannelID())
+					continue
+				}
+
+				t.waitGroup.Add(1)
+				go func(msgContext *MsgContext) {
+					channel.DeliveryMsg(msgContext)
+					t.waitGroup.Done()
+				}(msgContext)
+			}
+
 
 		case <-t.exitChan:
 			goto exit
@@ -136,38 +159,4 @@ func (t *TGO) GetChannel(channelID uint64) (*Channel, error) {
 	return channel, nil
 }
 
-func (t *TGO) startPushMsg(msgCtx *MsgContext)  {
-	t.Debug("将消息[%d]下发到管道[%d]！",msgCtx.Msg().MessageID,msgCtx.channelID)
-	clientIDs,err := t.Storage.GetClientIDs(msgCtx.channelID)
-	if err!=nil {
-		t.Error("获取管道[%d]的客户端ID集合失败！ -> %v",msgCtx.channelID,err)
-		return
-	}
-	if clientIDs==nil || len(clientIDs)<=0 {
-		t.Warn("Channel[%d]里没有客户端！",msgCtx.channelID)
-		return
-	}
-	for _,clientID :=range clientIDs {
-		if clientID == msgCtx.Msg().From { // 不发送给自己
-			continue
-		}
-		online := IsOnline(clientID)
-		if online {
-			conn := t.ConnManager.GetConn(clientID)
-			if conn!=nil {
-				msgPacket := packets.NewMessagePacket(msgCtx.msg.MessageID,msgCtx.channelID,msgCtx.msg.Payload)
-				msgPacketData,err := t.GetOpts().Pro.EncodePacket(msgPacket)
-				if err!=nil {
-					t.Error("编码消息[%d]数据失败！-> %v",msgCtx.msg.MessageID,err)
-					continue
-				}
-				_,err = conn.Write(msgPacketData)
-				if err!=nil {
-					t.Error("写入消息[%d]数据失败！-> %v",msgCtx.msg.MessageID,err)
-					continue
-				}
-			}
-		}
-	}
 
-}
