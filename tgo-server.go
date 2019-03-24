@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/judwhite/go-svc/svc"
+	"github.com/tgo-team/tgo-core/tgo"
+	"github.com/tgo-team/tgo-core/tgo/packets"
 	"github.com/tgo-team/tgo-talk/handlers"
 	_ "github.com/tgo-team/tgo-talk/log"
 	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
 	_ "github.com/tgo-team/tgo-talk/server/tcp"
 	_ "github.com/tgo-team/tgo-talk/server/udp"
 	_ "github.com/tgo-team/tgo-talk/storage/redis"
-	"github.com/tgo-team/tgo-talk/tgo"
-	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -44,8 +44,8 @@ func (p *program) Start() error {
 	}
 	t.Use(handlers.HandleConnPacket)
 	t.Use(handlers.HandlePingPacket)
-	t.Match(fmt.Sprintf("type:%d",packets.Message),handlers.HandleMessagePacket)
-	t.Match(fmt.Sprintf("type:%d",packets.CMD),handlers.HandleCMDPacket)
+	t.Match(fmt.Sprintf("type:%d", packets.Message), handlers.HandleMessagePacket)
+	t.Match(fmt.Sprintf("type:%d", packets.CMD), handlers.HandleCMDPacket)
 	p.t = t
 	return nil
 }

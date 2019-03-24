@@ -1,30 +1,30 @@
 package handlers
 
 import (
+	"github.com/tgo-team/tgo-core/tgo"
+	"github.com/tgo-team/tgo-core/tgo/packets"
 	"github.com/tgo-team/tgo-talk/handlers/cmd"
-	"github.com/tgo-team/tgo-talk/tgo"
-	"github.com/tgo-team/tgo-talk/tgo/packets"
 	"time"
 )
 
 // HandleConnPacket 处理连接包
 func HandleConnPacket(m *tgo.MContext) {
 
-	if m.PacketType()==packets.CMD { // CMD类型不做认证判断
+	if m.PacketType() == packets.CMD { // CMD类型不做认证判断
 		return
 	}
 
 	if m.PacketType() == packets.Connect {
 		m.Debug("开始认证！")
 		connectPacket := m.Packet().(*packets.ConnectPacket)
-		client,err := m.Storage().GetClient(connectPacket.ClientID)
-		if err!=nil {
-			m.Error("获取客户端信息失败！-> %v",err)
+		client, err := m.Storage().GetClient(connectPacket.ClientID)
+		if err != nil {
+			m.Error("获取客户端信息失败！-> %v", err)
 			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeError))
 			goto stopAuth
 		}
-		if client ==nil {
-			m.Info("客户端[%d]不存在",connectPacket.ClientID)
+		if client == nil {
+			m.Info("客户端[%d]不存在", connectPacket.ClientID)
 			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
 			goto stopAuth
 		}
@@ -41,7 +41,7 @@ func HandleConnPacket(m *tgo.MContext) {
 						m.Error("SetDeadline失败 -> %v", err)
 						goto stopAuth
 					}
-					tgo.Online(connectPacket.ClientID,1) // 设置为上线
+					tgo.Online(connectPacket.ClientID, 1) // 设置为上线
 					statefulConn.StartIOLoop()
 					m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
 					if err != nil {
@@ -90,39 +90,39 @@ func HandlePingPacket(m *tgo.MContext) {
 		}
 	}
 	if m.PacketType() == packets.Pingreq {
-		 m.ReplyPacket(packets.NewPingrespPacket())
+		m.ReplyPacket(packets.NewPingrespPacket())
 		if err != nil {
 			m.Error("回复心跳包失败 -> %v", err)
 			return
 		}
 	}
 }
+
 // HandleMessagePacket 处理消息包
 func HandleMessagePacket(m *tgo.MContext) {
 	if m.PacketType() == packets.Message {
 		messagePacket := m.Packet().(*packets.MessagePacket)
 		channel, err := m.GetChannel(messagePacket.ChannelID)
 		if err != nil {
-			m.Error("获取Channel[%d]失败 -> %v",messagePacket.ChannelID, err)
+			m.Error("获取Channel[%d]失败 -> %v", messagePacket.ChannelID, err)
 			return
 		}
-		if channel!=nil {
+		if channel != nil {
 			err = channel.PutMsg(m.Msg())
 			if err != nil {
-				m.Error("将消息放入Channel[%d]失败！ -> %v",messagePacket.ChannelID,err)
+				m.Error("将消息放入Channel[%d]失败！ -> %v", messagePacket.ChannelID, err)
 				return
 			}
-			 m.ReplyPacket(packets.NewMsgackPacket(messagePacket.MessageID))
-			if err!=nil {
-				m.Error("回复消息[%d]的ACK失败！ -> %v",messagePacket.MessageID,err)
+			m.ReplyPacket(packets.NewMsgackPacket(messagePacket.MessageID))
+			if err != nil {
+				m.Error("回复消息[%d]的ACK失败！ -> %v", messagePacket.MessageID, err)
 				return
 			}
-		}else{
-			m.Warn("Channel[%d]不存在！",messagePacket.ChannelID)
+		} else {
+			m.Warn("Channel[%d]不存在！", messagePacket.ChannelID)
 		}
 	}
 }
-
 
 // HandleCMDPacket 处理CMD包
 func HandleCMDPacket(m *tgo.MContext) {

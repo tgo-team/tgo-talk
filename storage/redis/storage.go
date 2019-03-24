@@ -3,7 +3,7 @@ package redis
 import (
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-core/tgo"
 	"strconv"
 )
 

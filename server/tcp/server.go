@@ -1,7 +1,7 @@
 package tcp
 
 import (
-	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-core/tgo"
 	"net"
 	"os"
 	"runtime"

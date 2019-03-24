@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/tgo-team/tgo-talk/tgo"
-	"github.com/tgo-team/tgo-talk/tgo/packets"
+	"github.com/tgo-team/tgo-core/tgo"
+	"github.com/tgo-team/tgo-core/tgo/packets"
 )
 
 func Register(m *tgo.MContext) {

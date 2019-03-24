@@ -3,7 +3,7 @@ package udp
 import (
 	"bytes"
 	"fmt"
-	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-core/tgo"
 	"net"
 )
 

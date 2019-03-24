@@ -1,10 +1,10 @@
 package tcp
 
 import (
-	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
-	"github.com/tgo-team/tgo-talk/test"
-	"github.com/tgo-team/tgo-talk/tgo"
-	"github.com/tgo-team/tgo-talk/tgo/packets"
+	_ "github.com/tgo-team/tgo-core/protocol/mqtt"
+	"github.com/tgo-team/tgo-core/test"
+	"github.com/tgo-team/tgo-core/tgo"
+	"github.com/tgo-team/tgo-core/tgo/packets"
 	"net"
 	"testing"
 )

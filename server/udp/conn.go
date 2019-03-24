@@ -2,7 +2,7 @@ package udp
 
 import (
 	"fmt"
-	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-core/tgo"
 	"net"
 	"sync"
 	"time"

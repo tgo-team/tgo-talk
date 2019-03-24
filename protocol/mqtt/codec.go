@@ -3,8 +3,8 @@ package mqtt
 import (
 	"bytes"
 	"fmt"
-	"github.com/tgo-team/tgo-talk/tgo"
-	"github.com/tgo-team/tgo-talk/tgo/packets"
+	"github.com/tgo-team/tgo-core/tgo"
+	"github.com/tgo-team/tgo-core/tgo/packets"
 	"io"
 )
 

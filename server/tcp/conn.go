@@ -2,7 +2,7 @@ package tcp
 
 import (
 	"fmt"
-	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-core/tgo"
 	"io"
 	"net"
 	"sync"

@@ -2,11 +2,11 @@ package tcp
 
 import (
 	"errors"
-	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
-	_ "github.com/tgo-team/tgo-talk/storage/memory"
-	"github.com/tgo-team/tgo-talk/test"
-	"github.com/tgo-team/tgo-talk/tgo"
-	"github.com/tgo-team/tgo-talk/tgo/packets"
+	_ "github.com/tgo-team/tgo-core/protocol/mqtt"
+	_ "github.com/tgo-team/tgo-core/storage/memory"
+	"github.com/tgo-team/tgo-core/test"
+	"github.com/tgo-team/tgo-core/tgo"
+	"github.com/tgo-team/tgo-core/tgo/packets"
 	"net"
 	"testing"
 	"time"

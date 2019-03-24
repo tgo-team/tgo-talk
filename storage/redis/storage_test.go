@@ -1,8 +1,8 @@
 package redis
 
 import (
-	"github.com/tgo-team/tgo-talk/test"
-	"github.com/tgo-team/tgo-talk/tgo"
+	"github.com/tgo-team/tgo-core/test"
+	"github.com/tgo-team/tgo-core/tgo"
 	"testing"
 )
 
