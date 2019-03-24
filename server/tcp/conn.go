@@ -3,6 +3,7 @@ package tcp
 import (
 	"fmt"
 	"github.com/tgo-team/tgo-talk/tgo"
+	"io"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -61,7 +62,12 @@ func (c *Conn) ioLoop() {
 		default:
 			packet, err := c.GetOpts().Pro.DecodePacket(c)
 			if err != nil {
-				c.Error("Decoding message failed - %v", err)
+				if err == io.EOF {
+					c.Debug("正常退出。")
+				}else{
+					c.Error("Decoding message failed - %v", err)
+				}
+
 				goto exit
 			}
 			if c.connChan!=nil && c.connChan.connContextChan!=nil {

@@ -22,9 +22,8 @@ func (c *Client) MarshalBinary() (data []byte, err error) {
 }
 
 func (c *Client) UnmarshalBinary(data []byte) error {
-	dataBuffer := bytes.NewBuffer(data)
 	c.ClientID = binary.BigEndian.Uint64(data[:8])
-	c.Password = packets.DecodeString(dataBuffer)
+	c.Password = packets.DecodeString(bytes.NewBuffer(data[8:]))
 	return nil
 }
 

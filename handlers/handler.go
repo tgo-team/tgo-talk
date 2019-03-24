@@ -19,12 +19,14 @@ func HandleConnPacket(m *tgo.MContext) {
 		connectPacket := m.Packet().(*packets.ConnectPacket)
 		client,err := m.Storage().GetClient(connectPacket.ClientID)
 		if err!=nil {
+			m.Error("获取客户端信息失败！-> %v",err)
 			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeError))
-			return
+			goto stopAuth
 		}
 		if client ==nil {
+			m.Info("客户端[%d]不存在",connectPacket.ClientID)
 			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
-			return
+			goto stopAuth
 		}
 		if connectPacket.ClientID == client.ClientID && connectPacket.Password == client.Password {
 			m.Debug("认证成功！")
@@ -37,28 +39,28 @@ func HandleConnPacket(m *tgo.MContext) {
 					err := statefulConn.SetDeadline(time.Now().Add(m.Ctx.TGO.GetOpts().MaxHeartbeatInterval * 2))
 					if err != nil {
 						m.Error("SetDeadline失败 -> %v", err)
-						m.Abort()
-						return
+						goto stopAuth
 					}
 					tgo.Online(connectPacket.ClientID,1) // 设置为上线
 					statefulConn.StartIOLoop()
 					m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
 					if err != nil {
 						m.Error("发送认证ACK失败 -> %v", err)
-						m.Abort()
-						return
+						goto stopAuth
 					}
 					m.Ctx.TGO.ConnManager.AddConn(connectPacket.ClientID, conn)
 				}
 			}
 		} else {
+			m.Info("用户或密码不正确！")
 			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
 			if err != nil {
 				m.Error("发送认证ACK失败 -> %v", err)
-				m.Abort()
-				return
+				goto stopAuth
 			}
 		}
+	stopAuth:
+		m.Abort()
 		m.Debug("结束认证！")
 	} else {
 		conn := m.Conn()
