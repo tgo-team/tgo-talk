@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	_ "github.com/tgo-team/tgo-core/log"
-	_ "github.com/tgo-team/tgo-core/protocol/mqtt"
-	"github.com/tgo-team/tgo-core/server/tcp"
-	_ "github.com/tgo-team/tgo-core/storage/memory"
-	"github.com/tgo-team/tgo-core/test"
 	"github.com/tgo-team/tgo-core/tgo"
 	"github.com/tgo-team/tgo-core/tgo/packets"
+	_ "github.com/tgo-team/tgo-talk/log"
+	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
+	"github.com/tgo-team/tgo-talk/server/tcp"
+	_ "github.com/tgo-team/tgo-talk/storage/memory"
+	"github.com/tgo-team/tgo-talk/test"
 	"net"
 	"os"
 	"testing"
@@ -179,7 +179,7 @@ func startTGO(t *testing.T) *tgo.TGO {
 	tg := tgo.New(opts)
 	err := tg.Start()
 	tg.Storage.AddClient(tgo.NewClient(testClientID, testPassword))
-	tg.Storage.AddChannel(tgo.NewChannel(testChannelID,1,&tgo.Context{TGO:tg}))
+	tg.Storage.AddChannel(tgo.NewChannel(testChannelID, 1, &tgo.Context{TGO: tg}))
 	test.Nil(t, err)
 	return tg
 }

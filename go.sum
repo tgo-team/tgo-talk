@@ -13,6 +13,14 @@ github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/tgo-team/tgo-core v0.0.0-20190324090919-f603f15856dd h1:zSLWQmhpiVam48l9bJSG1gHi7huh8rKLxA0lNBhqqXA=
 github.com/tgo-team/tgo-core v0.0.0-20190324090919-f603f15856dd/go.mod h1:7rdvQBaiWm/9Zhiv9kgnSmeWHhP4t57y57cTvYgBsyE=
+github.com/tgo-team/tgo-core v0.0.0-20190328095140-c345bdf0cdd8 h1:HYn+2mzW6sBPGCz/5c8crrDUSpa1j7b/pMUSbMk+D9U=
+github.com/tgo-team/tgo-core v0.0.0-20190328095140-c345bdf0cdd8/go.mod h1:7rdvQBaiWm/9Zhiv9kgnSmeWHhP4t57y57cTvYgBsyE=
+github.com/tgo-team/tgo-core v0.0.0-20190328140332-ba8ac3f76be6 h1:V0iE4lL13VyndwSJwGu9I1cYxJr0zTORYx5z/EO+CRM=
+github.com/tgo-team/tgo-core v0.0.0-20190328140332-ba8ac3f76be6/go.mod h1:7rdvQBaiWm/9Zhiv9kgnSmeWHhP4t57y57cTvYgBsyE=
+github.com/tgo-team/tgo-core v0.0.0-20190328144456-772789c48c4f h1:5H05ppvncCK8n5JIzDOr2Sy09FJOPu2UMPiEZKV2dYI=
+github.com/tgo-team/tgo-core v0.0.0-20190328144456-772789c48c4f/go.mod h1:7rdvQBaiWm/9Zhiv9kgnSmeWHhP4t57y57cTvYgBsyE=
+github.com/tgo-team/tgo-core v0.0.0-20190328145757-5357385d5665 h1:T9KdYUg9lblQDGquG315Ghy/P7qi713Nx9/MV0dKHm8=
+github.com/tgo-team/tgo-core v0.0.0-20190328145757-5357385d5665/go.mod h1:7rdvQBaiWm/9Zhiv9kgnSmeWHhP4t57y57cTvYgBsyE=
 github.com/zheng-ji/goCuckoo v0.0.0-20160727030056-090e82d0856a h1:vbbZUQEaCjhs21jjoh/6tf4s7VYLX/Rq7xIdUmlYA7s=
 github.com/zheng-ji/goCuckoo v0.0.0-20160727030056-090e82d0856a/go.mod h1:O+qnf7AeskhN3L600EzVdWZunZy90GlmZ0up072WHaA=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793 h1:u+LnwYTOOW7Ukr/fppxEb1Nwz0AtPflrblfvUudpo+I=

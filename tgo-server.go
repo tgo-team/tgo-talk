@@ -38,15 +38,16 @@ func (p *program) Init(env svc.Environment) error {
 func (p *program) Start() error {
 
 	t := tgo.New(tgo.NewOptions())
-	err := t.Start()
-	if err != nil {
-		panic(err)
-	}
 	t.Use(handlers.HandleConnPacket)
 	t.Use(handlers.HandlePingPacket)
 	t.Match(fmt.Sprintf("type:%d", packets.Message), handlers.HandleMessagePacket)
 	t.Match(fmt.Sprintf("type:%d", packets.CMD), handlers.HandleCMDPacket)
 	p.t = t
+	err := t.Start()
+	if err != nil {
+		panic(err)
+	}
+
 	return nil
 }
 

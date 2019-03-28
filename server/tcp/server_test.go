@@ -2,11 +2,11 @@ package tcp
 
 import (
 	"errors"
-	_ "github.com/tgo-team/tgo-core/protocol/mqtt"
-	_ "github.com/tgo-team/tgo-core/storage/memory"
-	"github.com/tgo-team/tgo-core/test"
 	"github.com/tgo-team/tgo-core/tgo"
 	"github.com/tgo-team/tgo-core/tgo/packets"
+	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
+	_ "github.com/tgo-team/tgo-talk/storage/memory"
+	"github.com/tgo-team/tgo-talk/test"
 	"net"
 	"testing"
 	"time"
@@ -26,11 +26,17 @@ func TestTCPServer_ReceivePacketChan(t *testing.T) {
 	opts := tgo.NewOptions()
 	opts.Log = test.NewLog(t)
 	tg := startTGO(opts)
-
-	clientConn, err := MustConnectServer(tg.Server.(*TCPServer).RealTCPAddr())
+	var tcpServer *Server
+	for _, server := range tg.Servers {
+		s, ok := server.(*Server)
+		if ok {
+			tcpServer = s
+		}
+	}
+	clientConn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
 
-	connectData, err := tg.GetOpts().Pro.EncodePacket(&packets.ConnectPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Connect}, ClientIdentifier: 1, PasswordFlag: true, Password: []byte("123456")})
+	connectData, err := tg.GetOpts().Pro.EncodePacket(&packets.ConnectPacket{FixedHeader: packets.FixedHeader{PacketType: packets.Connect}, ClientID: 1, PasswordFlag: true, Password: "123456"})
 	test.Nil(t, err)
 	_, err = clientConn.Write(connectData)
 	test.Nil(t, err)

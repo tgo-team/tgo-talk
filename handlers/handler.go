@@ -28,7 +28,7 @@ func HandleConnPacket(m *tgo.MContext) {
 			m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodePasswordOrUnameError))
 			goto stopAuth
 		}
-		if connectPacket.ClientID == client.ClientID && connectPacket.Password == client.Password {
+		if (connectPacket.ClientID == client.ClientID && connectPacket.Password == client.Password) || m.Ctx.TGO.GetOpts().TestOn  {
 			m.Debug("认证成功！")
 			conn := m.Conn()
 			if conn != nil {

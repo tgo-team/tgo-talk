@@ -39,13 +39,11 @@ func (s *Storage) StorageMsgChan() chan *tgo.MsgContext {
 
 func (s *Storage) AddMsg(msgContext *tgo.MsgContext) error {
 	msg := msgContext.Msg()
-	sMsgID := fmt.Sprintf("%d", msg.MessageID)
-	sChannelID := fmt.Sprintf("%d", msgContext.ChannelID())
-	_, err := s.client.Set(sMsgID, msg, 0).Result()
+	_, err := s.client.Set(s.getMsgKey(msg.MessageID), msg, 0).Result()
 	if err != nil {
 		return err
 	}
-	_, err = s.client.LPush(fmt.Sprintf("ch_msg_list:%s", sChannelID), sMsgID).Result()
+	_, err = s.client.ZAdd(s.getChannelMsgKey(msgContext.ChannelID()),redis.Z{Score:float64(msg.Timestamp),Member:fmt.Sprintf("%d",msg.MessageID)}).Result()
 	if err != nil {
 		return err
 	}
@@ -54,14 +52,46 @@ func (s *Storage) AddMsg(msgContext *tgo.MsgContext) error {
 }
 
 func (s *Storage) GetMsg(msgID uint64) (*tgo.Msg, error) {
-	key := fmt.Sprintf("%d", msgID)
 	msg := &tgo.Msg{}
-	err := s.client.Get(key).Scan(msg)
+	err := s.client.Get(s.getMsgKey(msgID)).Scan(msg)
 	if err != nil {
 		return nil, err
 	}
 	return msg, nil
 }
+
+func (s *Storage) GetMsgWithChannel(channelID uint64,pageIndex int64,pageSize int64) ([]*tgo.Msg, error){
+
+	msgIds,err := s.client.ZRange(s.getChannelMsgKey(channelID),(pageIndex-1)*pageSize,(pageIndex-1)*pageSize+pageSize-1).Result()
+	if err!=nil {
+		return nil,err
+	}
+
+	keys := make([]string,0,len(msgIds))
+	for _,msgIdStr :=range msgIds {
+		keys = append(keys,s.getMsgKeyWithMsgIDStr(msgIdStr))
+	}
+	msgs,err := s.client.MGet(keys...).Result()
+	if err!=nil {
+		return nil,err
+	}
+	msgList := make([]*tgo.Msg,0,len(msgs))
+	if len(msgs) >0 {
+		for _,msgObj :=range msgs {
+			if msgObj!=nil {
+				msg := &tgo.Msg{}
+				err = msg.UnmarshalBinary([]byte(msgObj.(string)))
+				if err!=nil {
+					return nil,err
+				}
+				msgList = append(msgList,msg)
+			}
+		}
+	}
+	return msgList,nil
+}
+
+
 
 func (s *Storage) AddChannel(c *tgo.Channel) error {
 	key := s.getChanelCacheKey(c.ChannelID)
@@ -135,4 +165,16 @@ func (s *Storage) getClientsCacheKey(clientID uint64)  string {
 
 func (s *Storage) getChanelCacheKey(channelID uint64)  string {
 	return fmt.Sprintf("%s%d","ch:", channelID)
+}
+
+func (s *Storage) getChannelMsgKey(channelID uint64) string  {
+	return fmt.Sprintf("%s%d","ch_msg_list:", channelID)
+}
+
+func (s *Storage) getMsgKey(msgID uint64) string  {
+	return fmt.Sprintf("%s%d","msg:",msgID)
+}
+
+func (s *Storage) getMsgKeyWithMsgIDStr(msgIDStr string) string  {
+	return fmt.Sprintf("%s%s","msg:",msgIDStr)
 }
