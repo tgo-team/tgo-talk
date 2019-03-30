@@ -33,7 +33,7 @@ func Register(m *tgo.MContext) {
 	}
 	var channelID = clientID
 	// 添加个人管道
-	err = m.Storage().AddChannel(tgo.NewChannel(channelID,tgo.ChannelTypePerson,m.Ctx))
+	err = m.Storage().AddChannel(tgo.NewChannelModel(channelID,tgo.ChannelTypePerson))
 	if err!=nil {
 		m.Error("添加Channel失败！-> %v",err)
 		replyCMDPacketError(m, CMDRegisterAck, RegisterError)

@@ -48,7 +48,8 @@ func HandleConnPacket(m *tgo.MContext) {
 						m.Error("发送认证ACK失败 -> %v", err)
 						goto stopAuth
 					}
-					m.Ctx.TGO.ConnManager.AddConn(connectPacket.ClientID, conn)
+					// 通知TGO认证成功
+					m.Ctx.TGO.AcceptAuthenticatedChan<- tgo.NewAuthenticatedContext(connectPacket.ClientID,statefulConn)
 				}
 			}
 		} else {

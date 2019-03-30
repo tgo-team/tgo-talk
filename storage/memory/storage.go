@@ -12,19 +12,21 @@ func init() {
 
 type Storage struct {
 	storageMsgChan chan *tgo.MsgContext
-	channelMsgMap      map[uint64][]*tgo.Msg
-	channelMap map[uint64] *tgo.Channel
-	clientMap map[uint64] *tgo.Client
-	ctx *tgo.Context
+	channelMsgMap  map[uint64][]*tgo.Msg
+	channelMap     map[uint64]*tgo.ChannelModel
+	clientMap      map[uint64]*tgo.Client
+	clientChannelRelationMap  map[uint64][]uint64
+	ctx            *tgo.Context
 }
 
 func NewStorage(ctx *tgo.Context) *Storage {
 	return &Storage{
 		storageMsgChan: make(chan *tgo.MsgContext, 0),
-		channelMsgMap:      make(map[uint64][]*tgo.Msg),
-		channelMap: make(map[uint64]*tgo.Channel),
-		clientMap: make(map[uint64]*tgo.Client),
-		ctx: ctx,
+		channelMsgMap:  make(map[uint64][]*tgo.Msg),
+		channelMap:     make(map[uint64]*tgo.ChannelModel),
+		clientMap:      make(map[uint64]*tgo.Client),
+		clientChannelRelationMap: make(map[uint64][]uint64),
+		ctx:            ctx,
 	}
 }
 
@@ -34,39 +36,52 @@ func (s *Storage) StorageMsgChan() chan *tgo.MsgContext {
 
 func (s *Storage) AddMsg(msgContext *tgo.MsgContext) error {
 	msgs := s.channelMsgMap[msgContext.ChannelID()]
-	if msgs==nil  {
-		msgs = make([]*tgo.Msg,0)
+	if msgs == nil {
+		msgs = make([]*tgo.Msg, 0)
 	}
-	msgs = append(msgs,msgContext.Msg())
+	msgs = append(msgs, msgContext.Msg())
 	s.channelMsgMap[msgContext.ChannelID()] = msgs
 	s.storageMsgChan <- msgContext
 	return nil
 }
 
-func (s *Storage) AddChannel(c *tgo.Channel) error {
+func (s *Storage) AddChannel(c *tgo.ChannelModel) error {
 	s.channelMap[c.ChannelID] = c
 	return nil
 }
-func (s *Storage) GetChannel(channelID uint64) (*tgo.Channel,error) {
+func (s *Storage) GetChannel(channelID uint64) (*tgo.ChannelModel, error) {
 	ch := s.channelMap[channelID]
-	ch.Ctx = s.ctx
-	return ch,nil
+	return ch, nil
 }
 
-func (s *Storage) AddClient( c *tgo.Client) error {
+func (s *Storage) AddClient(c *tgo.Client) error {
 	s.clientMap[c.ClientID] = c
 	return nil
 }
 
-func (s *Storage) Bind(consumerID uint64, channelID uint64) error {
+func (s *Storage) Bind(clientID uint64, channelID uint64) error {
+	clientIDs := s.clientChannelRelationMap[channelID]
+	if clientIDs==nil {
+		clientIDs = make([]uint64,0)
+	}
+	clientIDs = append(clientIDs,clientID)
+	s.clientChannelRelationMap[channelID] = clientIDs
 	return nil
 }
 
-func (s *Storage) GetClientIDs(channelID uint64) ([]uint64 ,error) {
-	return nil,nil
+func (s *Storage) GetClientIDs(channelID uint64) ([]uint64, error) {
+	return s.clientChannelRelationMap[channelID], nil
 }
 
-func (s *Storage) GetClient(clientID uint64) (*tgo.Client,error){
+func (s *Storage) GetClient(clientID uint64) (*tgo.Client, error) {
 
-	return s.clientMap[clientID],nil
+	return s.clientMap[clientID], nil
+}
+
+func (s *Storage) GetMsgWithChannel(channelID uint64, pageIndex int64, pageSize int64) ([]*tgo.Msg, error) {
+	msgList := s.channelMsgMap[channelID]
+	if int64(len(msgList)) >= (pageIndex-1)*pageSize+pageSize {
+		return msgList[(pageIndex-1)*pageSize : (pageIndex-1)*pageSize+pageSize], nil
+	}
+	return msgList[(pageIndex-1)*pageSize:], nil
 }

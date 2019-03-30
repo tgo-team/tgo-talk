@@ -18,7 +18,7 @@ type Server struct {
 	exitChan        chan int
 	waitGroup       tgo.WaitGroupWrapper
 	connExitChan    chan tgo.Conn // client exit
-	connContextChan chan *tgo.ConnContext
+	acceptPacketChan chan *tgo.PacketContext // 接受包上下文的管道
 	storage         tgo.Storage
 	opts            *tgo.Options
 	pro             tgo.Protocol
@@ -31,7 +31,7 @@ func NewServer(ctx *tgo.Context) *Server {
 	s := &Server{
 		exitChan:        make(chan int, 0),
 		connExitChan:    make(chan tgo.Conn, 1024),
-		connContextChan: ctx.TGO.ConnContextChan,
+		acceptPacketChan: ctx.TGO.AcceptPacketChan,
 		opts:            ctx.TGO.GetOpts(),
 		pro:             ctx.TGO.GetOpts().Pro,
 		ctx:             ctx,
@@ -73,8 +73,8 @@ func (s *Server) connLoop() {
 			s.exitChan <- 1
 			return
 		}
-		cn := NewConn(s.conn,addr,NewConnChan(s.connContextChan,s.connExitChan),s.ctx)
-		s.connContextChan <- tgo.NewConnContext(packet,cn)
+		cn := NewConn(s.conn,addr,NewConnChan(s.acceptPacketChan,s.connExitChan),s.ctx)
+		s.acceptPacketChan <- tgo.NewPacketContext(packet,cn)
 	}
 
 

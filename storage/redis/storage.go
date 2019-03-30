@@ -93,7 +93,7 @@ func (s *Storage) GetMsgWithChannel(channelID uint64,pageIndex int64,pageSize in
 
 
 
-func (s *Storage) AddChannel(c *tgo.Channel) error {
+func (s *Storage) AddChannel(c *tgo.ChannelModel) error {
 	key := s.getChanelCacheKey(c.ChannelID)
 	err := s.client.HMSet(key, map[string]interface {
 	}{
@@ -105,7 +105,7 @@ func (s *Storage) AddChannel(c *tgo.Channel) error {
 	}
 	return err
 }
-func (s *Storage) GetChannel(channelID uint64) (*tgo.Channel, error) {
+func (s *Storage) GetChannel(channelID uint64) (*tgo.ChannelModel, error) {
 	key := s.getChanelCacheKey(channelID)
 	channelFieldMap, err := s.client.HGetAll(key).Result()
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *Storage) GetChannel(channelID uint64) (*tgo.Channel, error) {
 	if err != nil {
 		return nil, err
 	}
-	ch := tgo.NewChannel(uint64(chID), tgo.ChannelType(chType),s.ctx)
+	ch := tgo.NewChannelModel(uint64(chID),int(chType))
 	return ch, nil
 }
 

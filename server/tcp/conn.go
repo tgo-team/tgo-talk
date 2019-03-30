@@ -11,13 +11,13 @@ import (
 )
 
 type ConnChan struct {
-	connContextChan chan *tgo.ConnContext
+	packetContextChan chan *tgo.PacketContext
 	connExitChan    chan tgo.Conn
 }
 
-func NewConnChan(connContextChan chan *tgo.ConnContext,connExitChan    chan tgo.Conn ) *ConnChan {
+func NewConnChan(packetContextChan chan *tgo.PacketContext,connExitChan    chan tgo.Conn ) *ConnChan {
 	return &ConnChan{
-		connContextChan:connContextChan,
+		packetContextChan:packetContextChan,
 		connExitChan:connExitChan,
 	}
 }
@@ -70,8 +70,8 @@ func (c *Conn) ioLoop() {
 
 				goto exit
 			}
-			if c.connChan!=nil && c.connChan.connContextChan!=nil {
-				c.connChan.connContextChan <- tgo.NewConnContext(packet, c)
+			if c.connChan!=nil && c.connChan.packetContextChan!=nil {
+				c.connChan.packetContextChan <- tgo.NewPacketContext(packet, c)
 			}
 
 		}
