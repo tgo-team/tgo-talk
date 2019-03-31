@@ -22,7 +22,7 @@ type Storage struct {
 
 func NewStorage(ctx *tgo.Context) *Storage {
 	return &Storage{
-		storageMsgChan: make(chan *tgo.MsgContext, 0),
+		storageMsgChan: make(chan *tgo.MsgContext, 1024),
 		ctx:ctx,
 		cacheChannelClientMap: map[uint64][]uint64{},
 		client: redis.NewClient(&redis.Options{
@@ -37,30 +37,42 @@ func (s *Storage) StorageMsgChan() chan *tgo.MsgContext {
 	return s.storageMsgChan
 }
 
-func (s *Storage) AddMsg(msgContext *tgo.MsgContext) error {
-	msg := msgContext.Msg()
+func (s *Storage) AddMsgInChannel(msg *tgo.Msg,channelID uint64) error {
 	_, err := s.client.Set(s.getMsgKey(msg.MessageID), msg, 0).Result()
 	if err != nil {
 		return err
 	}
-	_, err = s.client.ZAdd(s.getChannelMsgKey(msgContext.ChannelID()),redis.Z{Score:float64(msg.Timestamp),Member:fmt.Sprintf("%d",msg.MessageID)}).Result()
+	_, err = s.client.ZAdd(s.getChannelMsgKey(channelID),redis.Z{Score:float64(msg.Timestamp),Member:fmt.Sprintf("%d",msg.MessageID)}).Result()
 	if err != nil {
 		return err
 	}
-	s.storageMsgChan <- msgContext
+	s.storageMsgChan <- tgo.NewMsgContext(msg,channelID)
 	return nil
 }
 
-func (s *Storage) GetMsg(msgID uint64) (*tgo.Msg, error) {
-	msg := &tgo.Msg{}
-	err := s.client.Get(s.getMsgKey(msgID)).Scan(msg)
-	if err != nil {
-		return nil, err
+
+func (s *Storage) RemoveMsgInChannel(messageIDs []uint64, channelID uint64)   error {
+	if messageIDs==nil || len(messageIDs)<=0 {
+		return nil
 	}
-	return msg, nil
+	msgKeys := make([]string,0,len(messageIDs))
+	messageIDStrs := make([]interface{},0,len(messageIDs))
+	for _,messageID :=range messageIDs {
+		msgKeys = append(msgKeys,s.getMsgKey(messageID))
+		messageIDStrs = append(messageIDStrs,fmt.Sprintf("%d",messageID))
+	}
+	_,err := s.client.Del(msgKeys...).Result()
+	if err!=nil {
+		return err
+	}
+	_,err = s.client.ZRem(s.getChannelMsgKey(channelID),messageIDStrs...).Result()
+	if err!=nil {
+		return err
+	}
+	return nil
 }
 
-func (s *Storage) GetMsgWithChannel(channelID uint64,pageIndex int64,pageSize int64) ([]*tgo.Msg, error){
+func (s *Storage) GetMsgInChannel(channelID uint64,pageIndex int64,pageSize int64) ([]*tgo.Msg, error){
 
 	msgIds,err := s.client.ZRange(s.getChannelMsgKey(channelID),(pageIndex-1)*pageSize,(pageIndex-1)*pageSize+pageSize-1).Result()
 	if err!=nil {
@@ -70,6 +82,9 @@ func (s *Storage) GetMsgWithChannel(channelID uint64,pageIndex int64,pageSize in
 	keys := make([]string,0,len(msgIds))
 	for _,msgIdStr :=range msgIds {
 		keys = append(keys,s.getMsgKeyWithMsgIDStr(msgIdStr))
+	}
+	if len(keys)<=0 {
+		return nil,nil
 	}
 	msgs,err := s.client.MGet(keys...).Result()
 	if err!=nil {
@@ -91,6 +106,15 @@ func (s *Storage) GetMsgWithChannel(channelID uint64,pageIndex int64,pageSize in
 	return msgList,nil
 }
 
+
+func (s *Storage) GetMsg(msgID uint64) (*tgo.Msg, error) {
+	msg := &tgo.Msg{}
+	err := s.client.Get(s.getMsgKey(msgID)).Scan(msg)
+	if err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
 
 
 func (s *Storage) AddChannel(c *tgo.ChannelModel) error {

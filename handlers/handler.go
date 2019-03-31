@@ -41,7 +41,6 @@ func HandleConnPacket(m *tgo.MContext) {
 						m.Error("SetDeadline失败 -> %v", err)
 						goto stopAuth
 					}
-					tgo.Online(connectPacket.ClientID, 1) // 设置为上线
 					statefulConn.StartIOLoop()
 					m.ReplyPacket(packets.NewConnackPacket(packets.ConnReturnCodeSuccess))
 					if err != nil {
@@ -101,28 +100,37 @@ func HandlePingPacket(m *tgo.MContext) {
 
 // HandleMessagePacket 处理消息包
 func HandleMessagePacket(m *tgo.MContext) {
-	if m.PacketType() == packets.Message {
-		messagePacket := m.Packet().(*packets.MessagePacket)
-		channel, err := m.GetChannel(messagePacket.ChannelID)
+	messagePacket := m.Packet().(*packets.MessagePacket)
+	channel, err := m.GetChannel(messagePacket.ChannelID)
+	if err != nil {
+		m.Error("获取Channel[%d]失败 -> %v", messagePacket.ChannelID, err)
+		return
+	}
+	if channel != nil {
+		err = channel.PutMsg(m.Msg())
 		if err != nil {
-			m.Error("获取Channel[%d]失败 -> %v", messagePacket.ChannelID, err)
+			m.Error("将消息放入Channel[%d]失败！ -> %v", messagePacket.ChannelID, err)
 			return
 		}
-		if channel != nil {
-			err = channel.PutMsg(m.Msg())
-			if err != nil {
-				m.Error("将消息放入Channel[%d]失败！ -> %v", messagePacket.ChannelID, err)
-				return
-			}
-			m.ReplyPacket(packets.NewMsgackPacket(messagePacket.MessageID))
-			if err != nil {
-				m.Error("回复消息[%d]的ACK失败！ -> %v", messagePacket.MessageID, err)
-				return
-			}
-		} else {
-			m.Warn("Channel[%d]不存在！", messagePacket.ChannelID)
+		m.ReplyPacket(packets.NewMsgackPacket([]uint64{messagePacket.MessageID}))
+		if err != nil {
+			m.Error("回复消息[%d]的ACK失败！ -> %v", messagePacket.MessageID, err)
+			return
 		}
+	} else {
+		m.Warn("Channel[%d]不存在！", messagePacket.ChannelID)
 	}
+}
+
+func HandleMsgackPacket(m *tgo.MContext) {
+	msgackPacket := m.Packet().(*packets.MsgackPacket)
+	m.Info("收到消息回执:%d",msgackPacket.From)
+	err := m.Ctx.TGO.Storage.RemoveMsgInChannel(msgackPacket.MessageIDs,msgackPacket.From)
+	if err!=nil {
+		m.Error("移除消息失败！-> %v",err)
+		return
+	}
+
 }
 
 // HandleCMDPacket 处理CMD包

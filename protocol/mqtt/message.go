@@ -3,7 +3,6 @@ package mqtt
 import (
 	"bytes"
 	"fmt"
-	"github.com/tgo-team/tgo-core/tgo"
 	"github.com/tgo-team/tgo-core/tgo/packets"
 	"io"
 )
@@ -11,12 +10,9 @@ import (
 func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *packets.MessagePacket, error) {
 	msg := packets.NewMessagePacketHeader(*fh)
 	var payloadLength = msg.RemainingLength
-	msg.From = packets.DecodeUint64(reader)
-	if msg.From == 0 {
-		statefulConn,ok := reader.(tgo.StatefulConn)
-		if ok {
-			msg.From = statefulConn.GetID()
-		}
+	from := packets.DecodeUint64(reader)
+	if msg.From == 0 { // 如果不存在from 则使用协议里的 否则使用header里的from （因为有状态连接不需要从协议里获取from）
+		msg.From = from
 	}
 	msg.ChannelID = packets.DecodeUint64(reader)
 	payloadLength -= 8 + 8 // 减去 ChannelID的长度 + From的长度

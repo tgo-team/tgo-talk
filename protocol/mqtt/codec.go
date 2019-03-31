@@ -40,8 +40,7 @@ func (m *MQTTCodec) DecodePacket(reader tgo.Conn) (packets.Packet, error) {
 		return &packets.PingrespPacket{FixedHeader: *fh}, nil
 	}
 	if fh.PacketType == packets.Message {
-		msgPacket,err := m.decodeMessage(fh, reader)
-		return msgPacket,err
+		return  m.decodeMessage(fh, reader)
 	}
 	if fh.PacketType == packets.Msgack {
 		return m.decodeMsgack(fh, reader)
@@ -109,7 +108,7 @@ func (m *MQTTCodec) EncodePacket(packet packets.Packet) ([]byte, error) {
 	return packetBuffer.Bytes(), nil
 }
 
-func (m *MQTTCodec) decodeFixedHeader(reader io.Reader) (*packets.FixedHeader, error) {
+func (m *MQTTCodec) decodeFixedHeader(reader tgo.Conn) (*packets.FixedHeader, error) {
 	b := make([]byte, 1)
 	_, err := io.ReadFull(reader, b)
 	if err != nil {
@@ -122,6 +121,11 @@ func (m *MQTTCodec) decodeFixedHeader(reader io.Reader) (*packets.FixedHeader, e
 	fh.Qos = (typeAndFlags >> 1) & 0x03
 	fh.Retain = typeAndFlags&0x01 > 0
 	fh.RemainingLength = decodeLength(reader)
+
+	statefulCon,ok := reader.(tgo.StatefulConn)
+	if ok {
+		fh.From = statefulCon.GetID()
+	}
 
 	return fh, nil
 }

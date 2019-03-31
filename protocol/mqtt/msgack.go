@@ -8,14 +8,21 @@ import (
 
 func (m *MQTTCodec) decodeMsgack(fh *packets.FixedHeader,reader io.Reader) ( *packets.MsgackPacket, error) {
 	msg := packets.NewMsgackPacketWithHeader(*fh)
-	msg.MessageID = packets.DecodeUint64(reader)
+	messageIDCount := msg.RemainingLength/8
+	messageIDs := make([]uint64,0)
+	for i:=0;i<messageIDCount;i++ {
+		messageIDs = append(messageIDs,packets.DecodeUint64(reader))
+	}
+	msg.MessageIDs = messageIDs
 	return msg,nil
 }
 
 func (m *MQTTCodec) encodeMsgack(packet packets.Packet) ([]byte, error) {
 	msg := packet.(*packets.MsgackPacket)
 	var body bytes.Buffer
-	body.Write(packets.EncodeUint64(msg.MessageID))
+	for _,messageID :=range msg.MessageIDs {
+		body.Write(packets.EncodeUint64(messageID))
+	}
 	msg.RemainingLength = body.Len()
 	return body.Bytes(),nil
 }

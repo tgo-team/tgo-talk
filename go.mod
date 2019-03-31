@@ -5,6 +5,6 @@ require (
 	github.com/judwhite/go-svc v1.1.2
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a // indirect
 	github.com/sirupsen/logrus v1.3.0
-	github.com/tgo-team/tgo-core v0.0.0-20190330025632-0266b8ed3f97
+	github.com/tgo-team/tgo-core v0.0.0-20190331075353-07c6859828ab
 	github.com/zheng-ji/goCuckoo v0.0.0-20160727030056-090e82d0856a
 )

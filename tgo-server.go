@@ -8,6 +8,7 @@ import (
 	"github.com/tgo-team/tgo-talk/handlers"
 	_ "github.com/tgo-team/tgo-talk/log"
 	_ "github.com/tgo-team/tgo-talk/protocol/mqtt"
+	_ "github.com/tgo-team/tgo-talk/server/http"
 	_ "github.com/tgo-team/tgo-talk/server/tcp"
 	_ "github.com/tgo-team/tgo-talk/server/udp"
 	_ "github.com/tgo-team/tgo-talk/storage/redis"
@@ -41,6 +42,7 @@ func (p *program) Start() error {
 	t.Use(handlers.HandleConnPacket)
 	t.Use(handlers.HandlePingPacket)
 	t.Match(fmt.Sprintf("type:%d", packets.Message), handlers.HandleMessagePacket)
+	t.Match(fmt.Sprintf("type:%d", packets.Msgack), handlers.HandleMsgackPacket)
 	t.Match(fmt.Sprintf("type:%d", packets.CMD), handlers.HandleCMDPacket)
 	p.t = t
 	err := t.Start()
