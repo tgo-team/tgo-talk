@@ -15,7 +15,8 @@ func (m *MQTTCodec) decodeMessage(fh *packets.FixedHeader,reader io.Reader) ( *p
 		msg.From = from
 	}
 	msg.ChannelID = packets.DecodeUint64(reader)
-	payloadLength -= 8 + 8 // 减去 ChannelID的长度 + From的长度
+	msg.Timestamp = int64(packets.DecodeUint32(reader))
+	payloadLength -= 8 + 8 + 4 // 减去 From的长度 + ChannelID的长度 + Timestamp的长度
 	if msg.Qos > 0 {
 		msg.MessageID = packets.DecodeUint64(reader)
 		payloadLength -=  8 // 减去messageID长度
@@ -33,6 +34,7 @@ func (m *MQTTCodec) encodeMessage(packet packets.Packet) ([]byte, error) {
 	var body bytes.Buffer
 	body.Write(packets.EncodeUint64(msg.From))
 	body.Write(packets.EncodeUint64(msg.ChannelID))
+	body.Write(packets.EncodeUint32(uint32(msg.Timestamp)))
 	if msg.Qos > 0 {
 		body.Write(packets.EncodeUint64(msg.MessageID))
 	}
