@@ -45,7 +45,7 @@ func (m *MQTTCodec) DecodePacket(reader tgo.Conn) (packets.Packet, error) {
 	if fh.PacketType == packets.Msgack {
 		return m.decodeMsgack(fh, reader)
 	}
-	if fh.PacketType == packets.CMD {
+	if fh.PacketType == packets.Cmd {
 		return m.decodeCMD(fh, reader)
 	}
 	return nil, fmt.Errorf("不支持的包类型[%d]",fh.PacketType)
@@ -83,7 +83,7 @@ func (m *MQTTCodec) EncodePacket(packet packets.Packet) ([]byte, error) {
 			return nil, err
 		}
 	}
-	if packetType == packets.CMD {
+	if packetType == packets.Cmd {
 		remainingBytes, err = m.encodeCMD(packet)
 		if err != nil {
 			return nil, err

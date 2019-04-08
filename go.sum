@@ -51,6 +51,12 @@ github.com/tgo-team/tgo-core v0.0.0-20190331065931-705e24442b66 h1:6VzsdniCAqdmo
 github.com/tgo-team/tgo-core v0.0.0-20190331065931-705e24442b66/go.mod h1:5RHCeSyTpKL/e6MP4G4feq7v+YwurJ6tj46LVbliNxg=
 github.com/tgo-team/tgo-core v0.0.0-20190331075353-07c6859828ab h1:4Wncg32u9GyTQBMUKs86kELN7Gi7Lf/KR4EfMQYG9mk=
 github.com/tgo-team/tgo-core v0.0.0-20190331075353-07c6859828ab/go.mod h1:5RHCeSyTpKL/e6MP4G4feq7v+YwurJ6tj46LVbliNxg=
+github.com/tgo-team/tgo-core v0.0.0-20190403082010-af79b64c1753 h1:BFvFg45Oc7q0j3O8GGR3B4Yn4kB/wippO1cmfBgDsdg=
+github.com/tgo-team/tgo-core v0.0.0-20190403082010-af79b64c1753/go.mod h1:5RHCeSyTpKL/e6MP4G4feq7v+YwurJ6tj46LVbliNxg=
+github.com/tgo-team/tgo-core v0.0.0-20190403092855-2784299ee6b9 h1:VZfPXd3lzwjpwdzqXQu6lnSykuvHMDtUAqDgaWOisck=
+github.com/tgo-team/tgo-core v0.0.0-20190403092855-2784299ee6b9/go.mod h1:5RHCeSyTpKL/e6MP4G4feq7v+YwurJ6tj46LVbliNxg=
+github.com/tgo-team/tgo-core v0.0.0-20190403093118-94de6d961485 h1:F+pi6894kBjYS8Q2aUyRK9qxull2nX4pZ/CqZ2thEzs=
+github.com/tgo-team/tgo-core v0.0.0-20190403093118-94de6d961485/go.mod h1:5RHCeSyTpKL/e6MP4G4feq7v+YwurJ6tj46LVbliNxg=
 github.com/zheng-ji/goCuckoo v0.0.0-20160727030056-090e82d0856a h1:vbbZUQEaCjhs21jjoh/6tf4s7VYLX/Rq7xIdUmlYA7s=
 github.com/zheng-ji/goCuckoo v0.0.0-20160727030056-090e82d0856a/go.mod h1:O+qnf7AeskhN3L600EzVdWZunZy90GlmZ0up072WHaA=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793 h1:u+LnwYTOOW7Ukr/fppxEb1Nwz0AtPflrblfvUudpo+I=

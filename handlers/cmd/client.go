@@ -2,15 +2,16 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/tgo-team/tgo-core/tgo"
 	"github.com/tgo-team/tgo-core/tgo/packets"
 )
 
 func Register(m *tgo.MContext) {
 	m.Info("Register")
-	cmdPacket := m.Packet().(*packets.CMDPacket)
+	CmdPacket := m.Packet().(*packets.CmdPacket)
 
-	payloadReader := bytes.NewBuffer(cmdPacket.Payload)
+	payloadReader := bytes.NewBuffer(CmdPacket.Payload)
 
 	clientID := packets.DecodeUint64(payloadReader)
 	password := packets.DecodeString(payloadReader)
@@ -18,17 +19,17 @@ func Register(m *tgo.MContext) {
 	client, err := m.Storage().GetClient(clientID)
 	if err != nil {
 		m.Error("查询客户端[%d]失败！ -> %v", clientID, err)
-		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
+		replyCmdPacketError(m, fmt.Sprintf("%d",CMDRegisterAck), RegisterError)
 		return
 	}
 	if client != nil {
 		m.Error("客户端[%d]已存在！", clientID)
-		replyCMDPacketError(m, CMDRegisterAck, RegisterClientExist)
+		replyCmdPacketError(m, fmt.Sprintf("%d",CMDRegisterAck), RegisterClientExist)
 		return
 	}
 	err = m.Storage().AddClient(tgo.NewClient(clientID, password))
 	if err != nil {
-		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
+		replyCmdPacketError(m, fmt.Sprintf("%d",CMDRegisterAck), RegisterError)
 		return
 	}
 	var channelID = clientID
@@ -36,23 +37,23 @@ func Register(m *tgo.MContext) {
 	err = m.Storage().AddChannel(tgo.NewChannelModel(channelID,tgo.ChannelTypePerson))
 	if err!=nil {
 		m.Error("添加Channel失败！-> %v",err)
-		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
+		replyCmdPacketError(m, fmt.Sprintf("%d",CMDRegisterAck), RegisterError)
 		return
 	}
 
 	if err := m.Storage().Bind(clientID,channelID);err!=nil {
 		m.Error("绑定Channel失败！-> %v",err)
-		replyCMDPacketError(m, CMDRegisterAck, RegisterError)
+		replyCmdPacketError(m, fmt.Sprintf("%d",CMDRegisterAck), RegisterError)
 		return
 	}
-	replyCMDPacketSuccess(m, CMDRegisterAck)
+	replyCmdPacketSuccess(m, fmt.Sprintf("%d",CMDRegisterAck))
 
 }
 
-func replyCMDPacketError(m *tgo.MContext, cmd uint16, status uint16) {
-	m.ReplyPacket(packets.NewCMDPacket(cmd, packets.EncodeUint16(status)))
+func replyCmdPacketError(m *tgo.MContext, cmd string, status uint16) {
+	m.ReplyPacket(packets.NewCmdPacket(cmd, packets.EncodeUint16(status)))
 }
 
-func replyCMDPacketSuccess(m *tgo.MContext, cmd uint16) {
-	m.ReplyPacket(packets.NewCMDPacket(cmd, packets.EncodeUint16(uint16(CMDSuccess))))
+func replyCmdPacketSuccess(m *tgo.MContext, cmd string) {
+	m.ReplyPacket(packets.NewCmdPacket(cmd, packets.EncodeUint16(uint16(CMDSuccess))))
 }

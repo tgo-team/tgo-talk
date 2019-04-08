@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/tgo-team/tgo-core/tgo"
 	"github.com/tgo-team/tgo-core/tgo/packets"
 	"github.com/tgo-team/tgo-talk/handlers/cmd"
@@ -10,7 +11,7 @@ import (
 // HandleConnPacket 处理连接包
 func HandleConnPacket(m *tgo.MContext) {
 
-	if m.PacketType() == packets.CMD { // CMD类型不做认证判断
+	if m.PacketType() == packets.Cmd { // CMD类型不做认证判断
 		return
 	}
 
@@ -133,10 +134,10 @@ func HandleMsgackPacket(m *tgo.MContext) {
 
 }
 
-// HandleCMDPacket 处理CMD包
-func HandleCMDPacket(m *tgo.MContext) {
-	cmdPacket := m.Packet().(*packets.CMDPacket)
-	if cmdPacket.CMD == 1 {
+// HandleCmdPacket 处理CMD包
+func HandleCmdPacket(m *tgo.MContext) {
+	CmdPacket := m.Packet().(*packets.CmdPacket)
+	if CmdPacket.CMD == fmt.Sprintf("%d",1) {
 		cmd.Register(m)
 	}
 }

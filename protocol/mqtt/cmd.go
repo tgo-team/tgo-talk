@@ -7,10 +7,10 @@ import (
 	"io"
 )
 
-func (m *MQTTCodec) decodeCMD(fh *packets.FixedHeader,reader io.Reader) (*packets.CMDPacket, error) {
-	c :=packets.NewCMDPacketWithHeader(*fh)
-	c.CMD = packets.DecodeUint16(reader)
-	var payloadLength = c.RemainingLength - 2 // payloadLength = 剩余长度 - CMD长度
+func (m *MQTTCodec) decodeCMD(fh *packets.FixedHeader,reader io.Reader) (*packets.CmdPacket, error) {
+	c :=packets.NewCmdPacketWithHeader(*fh)
+	c.CMD = packets.DecodeString(reader)
+	var payloadLength = c.RemainingLength - (len(c.CMD) + 2) // payloadLength = 剩余长度 - CMD长度
 	if payloadLength < 0 {
 		return nil,fmt.Errorf("Error upacking cmd, payload length < 0")
 	}
@@ -20,9 +20,9 @@ func (m *MQTTCodec) decodeCMD(fh *packets.FixedHeader,reader io.Reader) (*packet
 }
 
 func (m *MQTTCodec) encodeCMD(packet packets.Packet) ([]byte, error) {
-	c := packet.(*packets.CMDPacket)
+	c := packet.(*packets.CmdPacket)
 	var body bytes.Buffer
-	body.Write(packets.EncodeUint16(c.CMD))
+	body.Write(packets.EncodeString(c.CMD))
 	body.Write(c.Payload)
 	c.RemainingLength = body.Len()
 	return body.Bytes(),nil

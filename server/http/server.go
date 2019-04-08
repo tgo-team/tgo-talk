@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/tgo-team/tgo-core/tgo"
 	"github.com/tgo-team/tgo-core/tgo/packets"
 	"github.com/tgo-team/tgo-talk/handlers/cmd"
@@ -62,9 +63,9 @@ func (s *Server) register(w http.ResponseWriter, req *http.Request) {
 	var body bytes.Buffer
 	body.Write(packets.EncodeUint64(registerStruct.ClientID))
 	body.Write(packets.EncodeString(registerStruct.Password))
-	cmdPacket := packets.NewCMDPacket(cmd.CMDRegister, body.Bytes())
+	CmdPacket := packets.NewCmdPacket(fmt.Sprintf("%d",cmd.CMDRegister), body.Bytes())
 
-	respPacket,err := s.requestCMD(req,cmdPacket)
+	respPacket,err := s.requestCMD(req,CmdPacket)
 	if err!=nil {
 		s.Error("请求出错！-> %v",err)
 		utils.ResponseError400(w,"请求出错！")
@@ -83,19 +84,19 @@ func (s *Server) register(w http.ResponseWriter, req *http.Request) {
 	utils.ResponseSuccess(w)
 }
 
-func (s *Server) requestCMD(req *http.Request, packet *packets.CMDPacket) (*packets.CMDPacket,error) {
+func (s *Server) requestCMD(req *http.Request, packet *packets.CmdPacket) (*packets.CmdPacket,error) {
 	respChan := make(chan []byte, 0)
 	cn := NewConn(req, respChan, NewConnChan(s.ctx.TGO.AcceptPacketChan, nil), s.ctx)
 	s.ctx.TGO.AcceptPacketChan <- tgo.NewPacketContext(packet, cn)
 
-	var respPacket *packets.CMDPacket
+	var respPacket *packets.CmdPacket
 	select {
 	case data := <-respChan:
 		packet,err := s.ctx.TGO.GetOpts().Pro.DecodePacket(bytes.NewBuffer(data))
 		if err!=nil {
 			return nil,err
 		}
-		respPacket = packet.(*packets.CMDPacket)
+		respPacket = packet.(*packets.CmdPacket)
 	case <-time.After(5 * time.Second): //超时5s
 	}
 	return respPacket,nil

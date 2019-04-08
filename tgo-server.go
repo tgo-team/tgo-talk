@@ -43,7 +43,7 @@ func (p *program) Start() error {
 	t.Use(handlers.HandlePingPacket)
 	t.Match(fmt.Sprintf("type:%d", packets.Message), handlers.HandleMessagePacket)
 	t.Match(fmt.Sprintf("type:%d", packets.Msgack), handlers.HandleMsgackPacket)
-	t.Match(fmt.Sprintf("type:%d", packets.CMD), handlers.HandleCMDPacket)
+	t.Match(fmt.Sprintf("type:%d", packets.Cmd), handlers.HandleCmdPacket)
 	p.t = t
 	err := t.Start()
 	if err != nil {

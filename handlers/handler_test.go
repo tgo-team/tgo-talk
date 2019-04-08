@@ -115,11 +115,11 @@ func TestHandleMessagePacket(t *testing.T) {
 
 }
 
-func TestHandleCMDPacket(t *testing.T) {
+func TestHandleCmdPacket(t *testing.T) {
 	tg := startTGO(t)
 	tg.Use(HandleConnPacket)
 	tg.Use(HandlePingPacket)
-	tg.Match(fmt.Sprintf("type:%d", packets.CMD), HandleCMDPacket)
+	tg.Match(fmt.Sprintf("type:%d", packets.CMD), HandleCmdPacket)
 	var tcpServer *tcp.Server
 	for _, server := range tg.Servers {
 		s, ok := server.(*tcp.Server)
@@ -129,7 +129,7 @@ func TestHandleCMDPacket(t *testing.T) {
 	}
 	conn, err := MustConnectServer(tcpServer.RealTCPAddr())
 	test.Nil(t, err)
-	sendCMDPacket(t, conn, tg, packets.NewCMDPacket(100, []byte("admin")))
+	sendCmdPacket(t, conn, tg, packets.NewCmdPacket(100, []byte("admin")))
 	time.Sleep(time.Millisecond * 50)
 }
 
@@ -137,8 +137,8 @@ func sendMsgPacket(t *testing.T, conn net.Conn, tg *tgo.TGO, msgPacket *packets.
 	WritePacket(t, conn, msgPacket, tg)
 }
 
-func sendCMDPacket(t *testing.T, conn net.Conn, tg *tgo.TGO, cmdPacket *packets.CMDPacket) {
-	WritePacket(t, conn, cmdPacket, tg)
+func sendCmdPacket(t *testing.T, conn net.Conn, tg *tgo.TGO, CmdPacket *packets.CmdPacket) {
+	WritePacket(t, conn, CmdPacket, tg)
 }
 
 func sendAuthPacket(t *testing.T, conn net.Conn, tg *tgo.TGO) {
