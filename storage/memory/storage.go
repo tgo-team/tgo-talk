@@ -59,6 +59,11 @@ func (s *Storage) AddClient(c *tgo.Client) error {
 	return nil
 }
 
+func (s *Storage) UpdateClient(clientID uint64,password string) error {
+	s.clientMap[clientID] = tgo.NewClient(clientID,password)
+	return nil
+}
+
 func (s *Storage) Bind(clientID uint64, channelID uint64) error {
 	clientIDs := s.clientChannelRelationMap[channelID]
 	if clientIDs==nil {

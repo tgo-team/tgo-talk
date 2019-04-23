@@ -138,6 +138,6 @@ func HandleMsgackPacket(m *tgo.MContext) {
 func HandleCmdPacket(m *tgo.MContext) {
 	CmdPacket := m.Packet().(*packets.CmdPacket)
 	if CmdPacket.CMD == fmt.Sprintf("%d",1) {
-		cmd.Register(m)
+		cmd.UpdateToken(m)
 	}
 }

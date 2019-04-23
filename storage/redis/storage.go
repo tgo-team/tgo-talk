@@ -160,6 +160,11 @@ func (s *Storage) AddClient(c *tgo.Client) error {
 	return s.client.Set(s.getClientsCacheKey(c.ClientID), c, 0).Err()
 }
 
+func (s *Storage) UpdateClient(clientID uint64,password string) error {
+	newClient := tgo.NewClient(clientID,password)
+	return s.client.Set(s.getClientsCacheKey(newClient.ClientID), newClient, 0).Err()
+}
+
 func (s *Storage) Bind(clientID uint64, channelID uint64) error {
 
 	return s.client.ZAdd(s.getChannelClientCacheKey(channelID), redis.Z{Score: 1.0, Member: clientID}).Err()

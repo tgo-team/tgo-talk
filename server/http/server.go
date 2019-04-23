@@ -44,44 +44,51 @@ func (s *Server) Stop() error {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	switch req.RequestURI {
-	case "/register":
-		s.register(w, req)
+	case "/client/update":
+		s.clientUpdate(w, req)
 	}
 
 }
 
-func (s *Server) register(w http.ResponseWriter, req *http.Request) {
-	var registerStruct struct {
+func (s *Server) clientUpdate(w http.ResponseWriter, req *http.Request) {
+	var clientUpdateStruct struct {
 		ClientID uint64 `json:"client_id"`
 		Password string `json:"password"`
 	}
-	if err := utils.BindJson(req, &registerStruct); err != nil {
+	if err := utils.BindJson(req, &clientUpdateStruct); err != nil {
 		s.Error("数据输入有误！-> %v", err)
-		utils.ResponseError400(w, "数据输入有误！")
+		utils.ResponseSuccessJson(w,map[string]interface{}{
+			"status": 400,
+			"msg": "数据输入有误！",
+		})
 		return
 	}
 	var body bytes.Buffer
-	body.Write(packets.EncodeUint64(registerStruct.ClientID))
-	body.Write(packets.EncodeString(registerStruct.Password))
-	CmdPacket := packets.NewCmdPacket(fmt.Sprintf("%d",cmd.CMDRegister), body.Bytes())
+	body.Write(packets.EncodeUint64(clientUpdateStruct.ClientID))
+	body.Write(packets.EncodeString(clientUpdateStruct.Password))
+	CmdPacket := packets.NewCmdPacket(fmt.Sprintf("%d",cmd.CMDUpdateClient), body.Bytes())
 
 	respPacket,err := s.requestCMD(req,CmdPacket)
 	if err!=nil {
 		s.Error("请求出错！-> %v",err)
-		utils.ResponseError400(w,"请求出错！")
+		utils.ResponseSuccessJson(w,map[string]interface{}{
+			"status": 400,
+			"msg": "执行命令出错！",
+		})
 		return
 	}
 
 	status := packets.DecodeUint16(bytes.NewBuffer(respPacket.Payload))
-	if status == cmd.RegisterClientExist {
-		utils.ResponseError400(w,"客户端已存在！")
+	if status == cmd.UpdateClientError {
+		utils.ResponseSuccessJson(w,map[string]interface{}{
+			"status": 400,
+			"msg": "更新客户端出错！",
+		})
 		return
 	}
-	if status == cmd.RegisterError {
-		utils.ResponseError400(w,"注册出错！")
-		return
-	}
-	utils.ResponseSuccess(w)
+	utils.ResponseSuccessJson(w,map[string]interface{}{
+		"status": 200,
+	})
 }
 
 func (s *Server) requestCMD(req *http.Request, packet *packets.CmdPacket) (*packets.CmdPacket,error) {
